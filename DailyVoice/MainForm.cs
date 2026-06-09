@@ -5,17 +5,20 @@ namespace DailyVoice;
 
 public partial class MainForm : Form
 {
+    // PublishSingleFile 下 AppContext.BaseDirectory 指向临时目录，
+    // 用 ProcessPath 取 exe 真实所在目录 (⁎⁍̴̛ᴗ⁍̴̛⁎)
+    private static readonly string BaseDir =
+        Path.GetDirectoryName(Environment.ProcessPath!)!;
+
+    private readonly string _voiceDir = Path.Combine(BaseDir, "voice");
     private readonly Scheduler _scheduler;
     private readonly AudioPlayer _audioPlayer;
-    private readonly string _voiceDir;
     private Config _config;
 
     public MainForm()
     {
         InitializeComponent();
 
-        // 初始化路径
-        _voiceDir = Path.Combine(AppContext.BaseDirectory, "voice");
         Directory.CreateDirectory(_voiceDir);
 
         // 加载配置
@@ -140,7 +143,6 @@ public partial class MainForm : Form
         if (this.WindowState == FormWindowState.Minimized)
         {
             this.Hide();
-            // 托盘在 Program.cs 里管理
         }
     }
 

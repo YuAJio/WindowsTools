@@ -13,8 +13,13 @@ internal record Config
 
 internal static class ConfigManager
 {
+    // PublishSingleFile 下 AppContext.BaseDirectory 指向临时目录，
+    // 用 ProcessPath 取 exe 真实所在目录 (⁎⁍̴̛ᴗ⁍̴̛⁎)
+    private static readonly string BaseDir =
+        Path.GetDirectoryName(Environment.ProcessPath!)!;
+
     private static readonly string ConfigPath =
-        Path.Combine(AppContext.BaseDirectory, "config.json");
+        Path.Combine(BaseDir, "config.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
