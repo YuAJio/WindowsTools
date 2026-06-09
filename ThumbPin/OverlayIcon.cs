@@ -17,13 +17,17 @@ internal class OverlayIcon : IDisposable
     private readonly uint _targetThreadId;
     private Bitmap? _bitmap;
 
-    private const int SIZE = 24;
+    private int Size => _bitmap?.Width ?? 24;
     private bool _disposed;
 
     public OverlayIcon(IntPtr targetHwnd)
     {
         _targetHwnd = targetHwnd;
         _targetThreadId = NativeMethods.GetWindowThreadProcessId(targetHwnd, out _);
+
+        // 加载图标
+        _bitmap = LoadIconBitmap();
+        var size = _bitmap.Width;
 
         // 注册窗口类
         var className = "ThumbPinOverlay_" + Environment.ProcessId;
@@ -46,10 +50,8 @@ internal class OverlayIcon : IDisposable
         _overlayHwnd = NativeMethods.CreateWindowEx(
             WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_TOPMOST,
             className, "", WS_POPUP,
-            0, 0, SIZE, SIZE, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+            0, 0, size, size, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 
-        // 绘制图钉图标到 bitmap
-        _bitmap = RenderThumbPinIcon(SIZE);
         SetLayeredBitmap(_bitmap);
 
         PositionOverlay();
@@ -101,7 +103,7 @@ internal class OverlayIcon : IDisposable
 
         var ptSrc = new NativeMethods.POINT();
         var ptDest = new NativeMethods.POINT();
-        var size = new NativeMethods.SIZE { cx = SIZE, cy = SIZE };
+        var size = new NativeMethods.SIZE { cx = bmp.Width, cy = bmp.Height };
 
         NativeMethods.UpdateLayeredWindow(_overlayHwnd, screenDC, ref ptDest, ref size,
             memDC, ref ptSrc, 0, ref blend, 2); // ULW_ALPHA
@@ -129,8 +131,9 @@ internal class OverlayIcon : IDisposable
         if (_disposed) return;
         if (NativeMethods.GetWindowRect(_targetHwnd, out var rect))
         {
+            var s = Size;
             NativeMethods.SetWindowPos(_overlayHwnd, NativeMethods.HWND_TOPMOST,
-                rect.Left + 4, rect.Top + 4, SIZE, SIZE,
+                rect.Left + 4, rect.Top + 4, s, s,
                 NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
         }
     }
@@ -141,8 +144,19 @@ internal class OverlayIcon : IDisposable
     }
 
     // ═══════════════════════════════════════
-    //  绘制图钉图标 (GDI+)
+    //  图钉图标 — 从嵌入式资源 png 加载 (⁎⁍̴̛ᴗ⁍̴̛⁎)
     // ═══════════════════════════════════════
+
+    private static Bitmap LoadIconBitmap()
+    {
+        var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream("ThumbPin.ico_pin.png");
+        if (stream != null)
+            return new Bitmap(stream);
+
+        // fallback：纯手绘，虽然丑但不会崩
+        return RenderThumbPinIcon(24);
+    }
 
     private static Bitmap RenderThumbPinIcon(int size)
     {

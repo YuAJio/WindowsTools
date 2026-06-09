@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="app.png" />
+    <EmbeddedResource Include="ico_pin.png" />
   </ItemGroup>
 
 </Project>
