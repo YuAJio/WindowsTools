@@ -132,8 +132,12 @@ internal class OverlayIcon : IDisposable
         if (NativeMethods.GetWindowRect(_targetHwnd, out var rect))
         {
             var s = Size;
+            // 放在标题栏左上角内侧，避免飘出窗口外
+            int x = rect.Left + 6;
+            int y = rect.Top + 28; // 估算标题栏高度 ~30px
+
             NativeMethods.SetWindowPos(_overlayHwnd, NativeMethods.HWND_TOPMOST,
-                rect.Left + 4, rect.Top + 4, s, s,
+                x, y, s, s,
                 NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
         }
     }
