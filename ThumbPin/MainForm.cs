@@ -85,21 +85,20 @@ public partial class MainForm : Form
         this.Cursor = Cursors.Cross;
 
         _hookProc = MouseHookCallback;
-        using var curProcess = Process.GetCurrentProcess();
-        using var curModule = curProcess.MainModule;
-        if (curModule?.ModuleName == null) return;
 
+        // 低级钩子 hMod 传 IntPtr.Zero 也可以，用当前进程模块
         _mouseHook = NativeMethods.SetWindowsHookEx(
             NativeMethods.WH_MOUSE_LL,
             _hookProc,
-            NativeMethods.GetModuleHandle(curModule.ModuleName),
+            IntPtr.Zero,
             0);
     }
 
     private IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        // WM_LBUTTONDOWN = 0x0201
-        if (nCode >= 0 && wParam == 0x0201)
+        // WM_LBUTTONDOWN = 0x0201, WM_RBUTTONDOWN = 0x0204
+        var msg = (int)wParam;
+        if (nCode >= 0 && msg == 0x0201)
         {
             var ms = Marshal.PtrToStructure<NativeMethods.MSLLHOOKSTRUCT>(lParam);
             var hWnd = NativeMethods.WindowFromPoint(ms.pt.x, ms.pt.y);
@@ -122,7 +121,7 @@ public partial class MainForm : Form
         }
 
         // 右键取消捕获
-        if (nCode >= 0 && wParam == 0x0204) // WM_RBUTTONDOWN
+        if (nCode >= 0 && msg == 0x0204)
         {
             BeginInvoke(() =>
             {
