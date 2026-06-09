@@ -5,8 +5,8 @@ namespace ThumbPin;
 
 public partial class MainForm : Form
 {
-    // 已被置顶的窗口句柄集合（弱追踪，窗口关闭后从列表清除）
-    private readonly HashSet<IntPtr> _pinned = [];
+    // 已被置顶的窗口句柄 → 对应的图钉标记
+    private readonly Dictionary<IntPtr, OverlayIcon> _pinned = [];
 
     // 热键 ID
     private const int HOTKEY_PIN = 1;
@@ -34,7 +34,11 @@ public partial class MainForm : Form
             // 取消置顶
             NativeMethods.SetWindowPos(hWnd, NativeMethods.HWND_NOTOPMOST,
                 0, 0, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_SHOWWINDOW);
-            _pinned.Remove(hWnd);
+            if (_pinned.TryGetValue(hWnd, out var overlay))
+            {
+                overlay.Dispose();
+                _pinned.Remove(hWnd);
+            }
             UpdateStatus($"已取消置顶", Color.DimGray);
         }
         else
@@ -42,7 +46,8 @@ public partial class MainForm : Form
             // 置顶
             NativeMethods.SetWindowPos(hWnd, NativeMethods.HWND_TOPMOST,
                 0, 0, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_SHOWWINDOW);
-            _pinned.Add(hWnd);
+            var overlay = new OverlayIcon(hWnd);
+            _pinned.Add(hWnd, overlay);
             var title = GetWindowTitle(hWnd);
             UpdateStatus($"✅ 已置顶: {(string.IsNullOrEmpty(title) ? "未知窗口" : title)}", Color.DarkGreen);
         }
@@ -59,13 +64,14 @@ public partial class MainForm : Form
 
     private void UnpinAll()
     {
-        foreach (var hWnd in _pinned.ToArray())
+        foreach (var (hWnd, overlay) in _pinned.ToArray())
         {
             if (NativeMethods.IsTopMost(hWnd))
             {
                 NativeMethods.SetWindowPos(hWnd, NativeMethods.HWND_NOTOPMOST,
                     0, 0, 0, 0, NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOMOVE | NativeMethods.SWP_SHOWWINDOW);
             }
+            overlay.Dispose();
         }
         _pinned.Clear();
         UpdateStatus("已取消全部置顶", Color.DimGray);
