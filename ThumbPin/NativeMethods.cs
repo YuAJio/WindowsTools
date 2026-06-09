@@ -112,6 +112,12 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 
+    // DWM API — 获取视觉边界（剔除隐形边框）
+    [DllImport("dwmapi.dll", SetLastError = true)]
+    public static extern int DwmGetWindowAttribute(IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
+
+    public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
     [DllImport("user32.dll")]
     public static extern bool UpdateWindow(IntPtr hWnd);
 

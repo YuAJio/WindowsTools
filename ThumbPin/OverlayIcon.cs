@@ -129,14 +129,22 @@ internal class OverlayIcon : IDisposable
     private void PositionOverlay()
     {
         if (_disposed) return;
-        if (NativeMethods.GetWindowRect(_targetHwnd, out var rect))
-        {
-            var s = Size;
-            // 严格对齐窗口左上角，不加偏移
-            NativeMethods.SetWindowPos(_overlayHwnd, NativeMethods.HWND_TOPMOST,
-                rect.Left, rect.Top, s, s,
-                NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
-        }
+
+        // 优先用 DWM 视觉边界（剔除隐形边框）
+        var rectSize = Marshal.SizeOf<NativeMethods.RECT>();
+        int hr = NativeMethods.DwmGetWindowAttribute(_targetHwnd, NativeMethods.DWMWA_EXTENDED_FRAME_BOUNDS, out var dwmRect, rectSize);
+
+        var rect = (hr == 0) ? dwmRect : new NativeMethods.RECT();
+
+        // DWM 失败时降级用 GetWindowRect
+        if (hr != 0 && !NativeMethods.GetWindowRect(_targetHwnd, out rect))
+            return;
+
+        var s = Size;
+        // 严格对齐窗口左上角
+        NativeMethods.SetWindowPos(_overlayHwnd, NativeMethods.HWND_TOPMOST,
+            rect.Left, rect.Top, s, s,
+            NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
     }
 
     private bool IsTargetAlive()
