@@ -15,14 +15,44 @@
 ```
 WindowsTools/
 ├── Klick/                     # 键盘/鼠标连点器
-│   ├── Klick.csproj           # net8.0-windows, WinExe
+│   ├── Klick.csproj           # net8.0-windows, WinExe + PublishSingleFile
 │   ├── Program.cs             # 入口 + 单实例 Mutex
 │   ├── MainForm.cs            # 主窗体逻辑
 │   ├── MainForm.Designer.cs   # UI 布局（手写，非 Designer 生成）
 │   └── NativeMethods.cs       # P/Invoke 封装（SendInput, 热键, 键盘钩子）
+├── Deck/                      # 🃏 卡组 — 成品工具发布目录
+│   └── Klick/                 # Klick 单文件发布 (exe, 不提交 git)
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```
+
+## Deck 发布规范 🃏
+
+**每个工具完成后必须发布到 Deck 目录**，方便直接双击启动。
+
+### 发布命令
+
+```bash
+dotnet publish <Project>/<Project>.csproj -c Release -o Deck/<Project>
+```
+
+### 配置要求
+
+每个工具的 `.csproj` 必须包含以下发布配置（单文件、依赖系统运行时）：
+
+```xml
+<PublishSingleFile>true</PublishSingleFile>
+<SelfContained>false</SelfContained>
+<IncludeNativeContentInSingleFile>true</IncludeNativeContentInSingleFile>
+<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+```
+
+### Deck 目录规则
+
+- `Deck/` 下按工具名建子文件夹，每个工具一个文件夹
+- 发布产物只保留 `*.exe`（不含 pdb），代码改动后需要重新 `dotnet publish`
+- **`Deck/*/` 已加入 `.gitignore`**，二进制不进 Git 仓库
+- 发布完成后通知用户：「`Deck/<工具名>/<工具名>.exe` 可直接双击启动喵~ ✨」
 
 ## 命名规范
 
@@ -47,9 +77,11 @@ WindowsTools/
 
 1. 在根目录新建文件夹（工具名 PascalCase）
 2. 项目文件 `<RootNamespace>` 与文件夹名一致
-3. 在 README.md 的「工具列表」添加条目
-4. 更新本文件的「项目结构」章节
-5. 每个工具自包含，不跨项目引用
+3. 在 `.csproj` 中添加 `PublishSingleFile` 等发布配置
+4. 完成后 `dotnet publish` 到 `Deck/<工具名>/`
+5. 在 README.md 的「工具列表」添加条目
+6. 更新本文件的「项目结构」章节
+7. 每个工具自包含，不跨项目引用
 
 ## Git 提交规范
 

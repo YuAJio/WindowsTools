@@ -12,6 +12,9 @@ obj/
 *.swp
 *.sln.DotSettings.user
 
+# Deck — 成品发布目录，exe 太大不进仓库
+Deck/*/
+
 # OS
 Thumbs.db
 .DS_Store

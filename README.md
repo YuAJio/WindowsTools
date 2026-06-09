@@ -6,7 +6,9 @@
 
 ```
 WindowsTools/
-├── Klick/          # 键盘/鼠标连点器
+├── Klick/          # 键盘/鼠标连点器（源码）
+├── Deck/           # 🃏 卡组 — 成品工具，双击即用
+│   └── Klick/      # Klick.exe 直接启动
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -27,12 +29,18 @@ WindowsTools/
 
 **技术栈**：.NET 8.0 + WinForms + SendInput (P/Invoke)
 
+---
+
+### 直接使用
+
+双击 `Deck/Klick/Klick.exe` 即可启动 🃏
+
 ```bash
-# 运行
+# 开发者运行
 dotnet run --project Klick
 
-# 编译
-dotnet build Klick -c Release
+# 重新发布到 Deck
+dotnet publish Klick/Klick.csproj -c Release -o Deck/Klick
 ```
 
 ## 开发环境

@@ -9,6 +9,12 @@
 
     <AssemblyName>Klick</AssemblyName>
     <RootNamespace>Klick</RootNamespace>
+
+    <!-- 单文件发布：Deck 目录扔一个 exe 直接双击启动 (⁎⁍̴̛ᴗ⁍̴̛⁎) -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <IncludeNativeContentInSingleFile>true</IncludeNativeContentInSingleFile>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
 </Project>
