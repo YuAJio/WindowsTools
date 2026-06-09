@@ -20,8 +20,17 @@ WindowsTools/
 │   ├── MainForm.cs            # 主窗体逻辑
 │   ├── MainForm.Designer.cs   # UI 布局（手写，非 Designer 生成）
 │   └── NativeMethods.cs       # P/Invoke 封装（SendInput, 热键, 键盘钩子）
+├── DailyVoice/                # 每日语音播放器
+│   ├── DailyVoice.csproj      # net8.0-windows, WinExe + PublishSingleFile + NAudio
+│   ├── Program.cs             # 入口 + 单实例 + 托盘
+│   ├── MainForm.cs            # 配置窗口逻辑
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   ├── Config.cs              # 配置模型 + JSON 读写
+│   ├── AudioPlayer.cs         # NAudio 播放引擎（链式播放）
+│   └── Scheduler.cs           # 定时检测 + 洗牌队列
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
-│   └── Klick/                 # Klick 单文件发布 (exe, 不提交 git)
+│   ├── Klick/
+│   └── DailyVoice/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```
