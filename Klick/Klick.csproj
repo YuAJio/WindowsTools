@@ -17,4 +17,8 @@
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="app.png" />
+  </ItemGroup>
+
 </Project>

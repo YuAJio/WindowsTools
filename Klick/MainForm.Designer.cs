@@ -45,6 +45,7 @@ partial class MainForm
     private void InitializeComponent()
     {
         this.Text = "Klick - 连点器";
+        this.Icon = IconHelper.LoadFromResource("Klick.app.png");
         this.Size = new Size(360, 310);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
@@ -184,8 +185,8 @@ partial class MainForm
             ContextMenuStrip = trayMenu,
             Visible = false
         };
-        // 用系统内置图标
-        notifyIcon.Icon = SystemIcons.Application;
+        // 从 png 加载图标 (⁎⁍̴̛ᴗ⁍̴̛⁎)
+        notifyIcon.Icon = IconHelper.LoadFromResource("Klick.app.png");
         notifyIcon.DoubleClick += OnShowFromTray;
 
         // --- 表单 ---

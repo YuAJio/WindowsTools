@@ -46,6 +46,7 @@ partial class MainForm
     private void InitializeComponent()
     {
         this.Text = "DailyVoice — 每日语音播放";
+        this.Icon = IconHelper.LoadFromResource("DailyVoice.app.png");
         this.Size = new Size(420, 440);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;

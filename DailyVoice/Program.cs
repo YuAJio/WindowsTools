@@ -19,7 +19,7 @@ internal static class Program
         // 创建托盘
         var trayIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = IconHelper.LoadFromResource("DailyVoice.app.png"),
             Text = "DailyVoice — 每日语音播放",
             Visible = true,
             ContextMenuStrip = new ContextMenuStrip()
