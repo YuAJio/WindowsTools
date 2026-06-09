@@ -28,9 +28,16 @@ WindowsTools/
 │   ├── Config.cs              # 配置模型 + JSON 读写
 │   ├── AudioPlayer.cs         # NAudio 播放引擎（链式播放）
 │   └── Scheduler.cs           # 定时检测 + 洗牌队列
+├── ThumbPin/                  # 窗口置顶工具
+│   ├── ThumbPin.csproj        # net8.0-windows, WinExe + PublishSingleFile
+│   ├── Program.cs             # 入口 + 单实例
+│   ├── MainForm.cs            # 主窗体 + 置顶逻辑 + 鼠标捕获
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   └── NativeMethods.cs       # P/Invoke（SetWindowPos, 热键, 鼠标钩子）
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
 │   ├── Klick/
-│   └── DailyVoice/
+│   ├── DailyVoice/
+│   └── ThumbPin/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```

@@ -8,9 +8,11 @@
 WindowsTools/
 ├── Klick/          # 键盘/鼠标连点器（源码）
 ├── DailyVoice/     # 每日语音播放器（源码）
+├── ThumbPin/       # 窗口置顶工具（源码）
 ├── Deck/           # 🃏 卡组 — 成品工具，双击即用
 │   ├── Klick/      # Klick.exe
-│   └── DailyVoice/ # DailyVoice.exe
+│   ├── DailyVoice/ # DailyVoice.exe
+│   └── ThumbPin/   # ThumbPin.exe
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -47,6 +49,19 @@ WindowsTools/
 
 **技术栈**：.NET 8.0 + WinForms + NAudio
 
+### [ThumbPin](ThumbPin/) — 窗口置顶
+
+点击捕获目标窗口置顶/取消，支持全局热键。
+
+| 功能 | 说明 |
+|------|------|
+| 📌 **点击置顶** | 点击「捕获窗口」→ 点击目标窗口 → 置顶/取消 |
+| ⌨ **全局热键** | Ctrl+Shift+F7 快速切换前台窗口置顶状态 |
+| 📋 **批量管理** | 一键取消全部置顶，显示已置顶窗口计数 |
+| 📦 **系统托盘** | 关闭窗口即隐藏到托盘 |
+
+**技术栈**：.NET 8.0 + WinForms + SetWindowPos
+
 ---
 
 ### 直接使用
@@ -57,6 +72,7 @@ WindowsTools/
 # 开发者运行
 dotnet run --project Klick
 dotnet run --project DailyVoice
+dotnet run --project ThumbPin
 
 # 重新发布到 Deck
 dotnet publish Klick/Klick.csproj -c Release -o Deck/Klick
