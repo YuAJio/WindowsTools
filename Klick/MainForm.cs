@@ -96,7 +96,6 @@ public partial class MainForm : Form
         }, token);
 
         _isClicking = false;
-        if (!_stopRequested) return; // 被取消但不是手动停
         UpdateStatusLabel("⏸ 已停止", Color.DimGray);
     }
 
@@ -116,20 +115,24 @@ public partial class MainForm : Form
         {
             var inputs = new NativeMethods.INPUT[2];
 
-            // 按下
             inputs[0] = new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_MOUSE,
-                mi = new NativeMethods.MOUSEINPUT { dwFlags = MouseDownFlag() }
+                u = new NativeMethods.INPUTUNION
+                {
+                    mi = new NativeMethods.MOUSEINPUT { dwFlags = MouseDownFlag() }
+                }
             };
-            // 弹起
             inputs[1] = new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_MOUSE,
-                mi = new NativeMethods.MOUSEINPUT { dwFlags = MouseUpFlag() }
+                u = new NativeMethods.INPUTUNION
+                {
+                    mi = new NativeMethods.MOUSEINPUT { dwFlags = MouseUpFlag() }
+                }
             };
 
-            NativeMethods.SendInput(2, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+            NativeMethods.SendInput(2, inputs, NativeMethods.INPUT_SIZE);
         }
         else
         {
@@ -138,23 +141,29 @@ public partial class MainForm : Form
             inputs[0] = new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_KEYBOARD,
-                ki = new NativeMethods.KEYBDINPUT
+                u = new NativeMethods.INPUTUNION
                 {
-                    wVk = (ushort)_targetVk,
-                    dwFlags = NativeMethods.KEYEVENTF_KEYDOWN
+                    ki = new NativeMethods.KEYBDINPUT
+                    {
+                        wVk = (ushort)_targetVk,
+                        dwFlags = NativeMethods.KEYEVENTF_KEYDOWN
+                    }
                 }
             };
             inputs[1] = new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_KEYBOARD,
-                ki = new NativeMethods.KEYBDINPUT
+                u = new NativeMethods.INPUTUNION
                 {
-                    wVk = (ushort)_targetVk,
-                    dwFlags = NativeMethods.KEYEVENTF_KEYUP
+                    ki = new NativeMethods.KEYBDINPUT
+                    {
+                        wVk = (ushort)_targetVk,
+                        dwFlags = NativeMethods.KEYEVENTF_KEYUP
+                    }
                 }
             };
 
-            NativeMethods.SendInput(2, inputs, Marshal.SizeOf<NativeMethods.INPUT>());
+            NativeMethods.SendInput(2, inputs, NativeMethods.INPUT_SIZE);
         }
     }
 
