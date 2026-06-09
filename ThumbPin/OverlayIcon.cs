@@ -1,20 +1,21 @@
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 
 namespace ThumbPin;
 
 /// <summary>
 /// 被置顶窗口左上角的图钉标记 (⁎⁍̴̛ᴗ⁍̴̛⁎)
-/// 透明分层窗口 + 点击穿透，跟随目标窗口移动。
+/// 纯 Win32 透明分层窗口 + 点击穿透 + 跟随目标窗口。
 /// </summary>
 internal class OverlayIcon : IDisposable
 {
     private readonly IntPtr _targetHwnd;
-    private readonly Form _overlayForm;
+    private readonly IntPtr _overlayHwnd;
     private readonly System.Windows.Forms.Timer _followTimer;
     private readonly IntPtr _winEventHook;
     private readonly NativeMethods.WinEventDelegate _winEventProc;
+    private readonly uint _targetThreadId;
+    private Bitmap? _bitmap;
 
     private const int SIZE = 24;
     private bool _disposed;
@@ -22,42 +23,50 @@ internal class OverlayIcon : IDisposable
     public OverlayIcon(IntPtr targetHwnd)
     {
         _targetHwnd = targetHwnd;
+        _targetThreadId = NativeMethods.GetWindowThreadProcessId(targetHwnd, out _);
+
+        // 注册窗口类
+        var className = "ThumbPinOverlay_" + Environment.ProcessId;
+        var wc = new NativeMethods.WNDCLASSEX
+        {
+            cbSize = Marshal.SizeOf<NativeMethods.WNDCLASSEX>(),
+            lpfnWndProc = WndProc,
+            hInstance = Marshal.GetHINSTANCE(typeof(OverlayIcon).Module),
+            lpszClassName = className
+        };
+        NativeMethods.RegisterClassEx(ref wc);
 
         // 创建透明分层窗口
-        _overlayForm = new Form
-        {
-            Size = new Size(SIZE, SIZE),
-            FormBorderStyle = FormBorderStyle.None,
-            ShowInTaskbar = false,
-            TopMost = true,
-            StartPosition = FormStartPosition.Manual,
-            BackColor = Color.Magenta,
-            TransparencyKey = Color.Magenta,
-            AllowTransparency = true,
-        };
+        const uint WS_EX_LAYERED = 0x00080000;
+        const uint WS_EX_TOOLWINDOW = 0x00000080;
+        const uint WS_EX_TRANSPARENT = 0x00000020;
+        const uint WS_EX_TOPMOST = 0x00000008;
+        const uint WS_POPUP = 0x80000000;
 
-        // 取消窗口的 WS_EX_TOOLWINDOW，让其拥有 WS_EX_TRANSPARENT 穿透点击
-        SetTransparentClickThrough(_overlayForm.Handle);
+        _overlayHwnd = NativeMethods.CreateWindowEx(
+            WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT | WS_EX_TOPMOST,
+            className, "", WS_POPUP,
+            0, 0, SIZE, SIZE, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 
-        // 用 GDI+ 画图钉图标
-        _overlayForm.Paint += DrawThumbPin;
+        // 绘制图钉图标到 bitmap
+        _bitmap = RenderThumbPinIcon(SIZE);
+        SetLayeredBitmap(_bitmap);
+
         PositionOverlay();
+        NativeMethods.ShowWindow(_overlayHwnd, 4); // SW_SHOWNOACTIVATE
 
-        _overlayForm.Show();
-
-        // 窗口位置变化监听（SetWinEventHook）
+        // WinEvent 监听目标窗口位置变化
         _winEventProc = WinEventCallback;
         _winEventHook = NativeMethods.SetWinEventHook(
             NativeMethods.EVENT_OBJECT_LOCATIONCHANGE,
             NativeMethods.EVENT_OBJECT_DESTROY,
             IntPtr.Zero,
             _winEventProc,
-            (uint)Environment.ProcessId,
-            0,
-            NativeMethods.WINEVENT_OUTOFCONTEXT | NativeMethods.WINEVENT_SKIPOWNPROCESS);
+            0, _targetThreadId, // 监听目标线程
+            NativeMethods.WINEVENT_OUTOFCONTEXT);
 
-        // 备用定时器（200ms 兜底）
-        _followTimer = new System.Windows.Forms.Timer { Interval = 200 };
+        // 备用定时器
+        _followTimer = new System.Windows.Forms.Timer { Interval = 300 };
         _followTimer.Tick += (_, _) =>
         {
             if (!IsTargetAlive())
@@ -70,69 +79,96 @@ internal class OverlayIcon : IDisposable
         _followTimer.Start();
     }
 
+    private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        return NativeMethods.DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+
+    private void SetLayeredBitmap(Bitmap bmp)
+    {
+        var screenDC = NativeMethods.GetDC(IntPtr.Zero);
+        var memDC = NativeMethods.CreateCompatibleDC(screenDC);
+        var hBitmap = bmp.GetHbitmap(Color.FromArgb(0));
+        var oldBitmap = NativeMethods.SelectObject(memDC, hBitmap);
+
+        var blend = new NativeMethods.BLENDFUNCTION
+        {
+            BlendOp = 0, // AC_SRC_OVER
+            BlendFlags = 0,
+            SourceConstantAlpha = 255,
+            AlphaFormat = 1 // AC_SRC_ALPHA
+        };
+
+        var ptSrc = new NativeMethods.POINT();
+        var ptDest = new NativeMethods.POINT();
+        var size = new NativeMethods.SIZE { cx = SIZE, cy = SIZE };
+
+        NativeMethods.UpdateLayeredWindow(_overlayHwnd, screenDC, ref ptDest, ref size,
+            memDC, ref ptSrc, 0, ref blend, 2); // ULW_ALPHA
+
+        NativeMethods.SelectObject(memDC, oldBitmap);
+        NativeMethods.DeleteDC(memDC);
+        NativeMethods.ReleaseDC(IntPtr.Zero, screenDC);
+        NativeMethods.DeleteObject(hBitmap);
+    }
+
     private void WinEventCallback(IntPtr hWinEventHook, uint eventType,
         IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
     {
         if (hwnd == _targetHwnd && idObject == 0)
         {
             if (eventType == NativeMethods.EVENT_OBJECT_DESTROY)
-            {
                 Dispose();
-            }
             else
-            {
                 PositionOverlay();
-            }
         }
     }
 
     private void PositionOverlay()
     {
         if (_disposed) return;
-
         if (NativeMethods.GetWindowRect(_targetHwnd, out var rect))
         {
-            // 放在标题栏左上角
-            int x = rect.Left + 4;
-            int y = rect.Top + 4;
-
-            if (_overlayForm.Location.X != x || _overlayForm.Location.Y != y)
-            {
-                // 跨线程安全
-                if (_overlayForm.InvokeRequired)
-                    _overlayForm.Invoke(() => _overlayForm.Location = new Point(x, y));
-                else
-                    _overlayForm.Location = new Point(x, y);
-            }
+            NativeMethods.SetWindowPos(_overlayHwnd, NativeMethods.HWND_TOPMOST,
+                rect.Left + 4, rect.Top + 4, SIZE, SIZE,
+                NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
         }
     }
 
-    private void DrawThumbPin(object? sender, PaintEventArgs e)
+    private bool IsTargetAlive()
     {
-        var g = e.Graphics;
+        return IsWindow(_targetHwnd);
+    }
+
+    // ═══════════════════════════════════════
+    //  绘制图钉图标 (GDI+)
+    // ═══════════════════════════════════════
+
+    private static Bitmap RenderThumbPinIcon(int size)
+    {
+        var bmp = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bmp);
         g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.Clear(Color.Transparent);
 
-        using var brush = new SolidBrush(Color.FromArgb(220, 46, 46)); // 红图钉色
+        using var brush = new SolidBrush(Color.FromArgb(220, 46, 46));
         using var pen = new Pen(Color.FromArgb(180, 30, 30), 1.5f);
-        using var highlight = new SolidBrush(Color.FromArgb(100, 255, 255, 255));
+        using var highlight = new SolidBrush(Color.FromArgb(120, 255, 255, 255));
 
-        var rect = new RectangleF(3, 2, 16, 12);
-
-        // 图钉主体（圆角矩形）
+        var rect = new RectangleF(3, 2, 17, 13);
         FillRoundedRect(g, brush, rect, 3);
+        g.DrawLine(new Pen(highlight, 1.5f), 7, 4, 15, 10);
 
-        // 高光斜线
-        g.DrawLine(new Pen(highlight, 1.5f), 6, 4, 14, 9);
-
-        // 尖端（倒三角）
         var tip = new PointF[]
         {
-            new(rect.X + rect.Width / 2 - 3, rect.Bottom),
-            new(rect.X + rect.Width / 2 + 3, rect.Bottom),
-            new(rect.X + rect.Width / 2, rect.Bottom + 6)
+            new(rect.X + rect.Width / 2 - 3.5f, rect.Bottom),
+            new(rect.X + rect.Width / 2 + 3.5f, rect.Bottom),
+            new(rect.X + rect.Width / 2, rect.Bottom + 7)
         };
         g.FillPolygon(brush, tip);
         g.DrawPolygon(pen, tip);
+
+        return bmp;
     }
 
     private static void FillRoundedRect(Graphics g, Brush brush, RectangleF rect, int radius)
@@ -146,28 +182,9 @@ internal class OverlayIcon : IDisposable
         g.FillPath(brush, path);
     }
 
-    private bool IsTargetAlive()
-    {
-        return IsWindow(_targetHwnd);
-    }
-
     // ═══════════════════════════════════════
-    //  点击穿透
+    //  Win32 helpers
     // ═══════════════════════════════════════
-
-    private static void SetTransparentClickThrough(IntPtr hWnd)
-    {
-        const int GWL_EXSTYLE = -20;
-        const uint WS_EX_LAYERED = 0x00080000;
-        const uint WS_EX_TRANSPARENT = 0x00000020;
-
-        var exStyle = (uint)NativeMethods.GetWindowLong(hWnd, GWL_EXSTYLE);
-        exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT;
-        SetWindowLong(hWnd, GWL_EXSTYLE, (int)exStyle);
-    }
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -184,13 +201,10 @@ internal class OverlayIcon : IDisposable
         if (_winEventHook != IntPtr.Zero)
             NativeMethods.UnhookWinEvent(_winEventHook);
 
-        if (!_overlayForm.IsDisposed)
-        {
-            _overlayForm.Invoke(() =>
-            {
-                _overlayForm.Hide();
-                _overlayForm.Dispose();
-            });
-        }
+        if (_overlayHwnd != IntPtr.Zero)
+            NativeMethods.DestroyWindow(_overlayHwnd);
+
+        _bitmap?.Dispose();
+        _bitmap = null;
     }
 }

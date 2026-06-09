@@ -4,8 +4,6 @@ partial class MainForm
 {
     private System.ComponentModel.IContainer components = null!;
 
-    private Button btnCapture;
-    private Button btnToggleForeground;
     private Button btnUnpinAll;
     private Label lblPinnedCount;
     private Label lblStatus;
@@ -18,7 +16,6 @@ partial class MainForm
         if (disposing)
         {
             components?.Dispose();
-            _hookProc = null;
         }
         base.Dispose(disposing);
     }
@@ -27,36 +24,27 @@ partial class MainForm
     {
         this.Text = "ThumbPin — 窗口置顶";
         this.Icon = IconHelper.LoadFromResource("ThumbPin.app.png");
-        this.Size = new Size(320, 220);
+        this.Size = new Size(300, 180);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
 
-        // ── 捕获按钮 ──
-        btnCapture = new Button
+        // ── 说明 ──
+        var lblHint = new Label
         {
-            Text = "🎯 捕获窗口并置顶",
+            Text = "快捷键: Ctrl + Shift + F7",
             Location = new Point(20, 20),
-            Size = new Size(260, 40),
-            Font = new Font("Segoe UI", 11, FontStyle.Bold)
+            Size = new Size(250, 24),
+            Font = new Font("Segoe UI", 11, FontStyle.Bold),
+            TextAlign = ContentAlignment.MiddleCenter
         };
-        btnCapture.Click += OnCapture;
-
-        // ── 快速切换前台窗口 ──
-        btnToggleForeground = new Button
-        {
-            Text = "📌 置顶/取消 当前窗口 (Ctrl+Shift+F7)",
-            Location = new Point(20, 72),
-            Size = new Size(260, 40)
-        };
-        btnToggleForeground.Click += (s, e) => ToggleForegroundWindow();
 
         // ── 全部取消 ──
         btnUnpinAll = new Button
         {
             Text = "🗑 取消全部置顶",
-            Location = new Point(20, 124),
-            Size = new Size(260, 30)
+            Location = new Point(50, 60),
+            Size = new Size(190, 32)
         };
         btnUnpinAll.Click += (s, e) => UnpinAll();
 
@@ -64,8 +52,8 @@ partial class MainForm
         lblPinnedCount = new Label
         {
             Text = "已置顶: 0 个窗口",
-            Location = new Point(20, 162),
-            Size = new Size(260, 20),
+            Location = new Point(20, 105),
+            Size = new Size(250, 20),
             ForeColor = Color.DimGray,
             TextAlign = ContentAlignment.MiddleCenter
         };
@@ -73,8 +61,8 @@ partial class MainForm
         lblStatus = new Label
         {
             Text = "",
-            Location = new Point(20, 185),
-            Size = new Size(260, 20),
+            Location = new Point(20, 128),
+            Size = new Size(250, 20),
             ForeColor = Color.Gray,
             TextAlign = ContentAlignment.MiddleCenter
         };
@@ -95,8 +83,7 @@ partial class MainForm
         notifyIcon.DoubleClick += OnShowFromTray;
 
         // ── 表单 ──
-        this.Controls.Add(btnCapture);
-        this.Controls.Add(btnToggleForeground);
+        this.Controls.Add(lblHint);
         this.Controls.Add(btnUnpinAll);
         this.Controls.Add(lblPinnedCount);
         this.Controls.Add(lblStatus);
