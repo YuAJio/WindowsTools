@@ -15,6 +15,9 @@ obj/
 # Deck — 成品发布目录，exe 太大不进仓库
 Deck/*/
 
+# Releases — zip 包走 GitHub Release，不进仓库
+Releases/
+
 # OS
 Thumbs.db
 .DS_Store

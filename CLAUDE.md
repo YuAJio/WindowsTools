@@ -34,10 +34,20 @@ WindowsTools/
 │   ├── MainForm.cs            # 主窗体 + 置顶逻辑 + 鼠标捕获
 │   ├── MainForm.Designer.cs   # UI 布局（手写）
 │   └── NativeMethods.cs       # P/Invoke（SetWindowPos, 热键, 鼠标钩子）
+├── MoodyBlues/                # 操作录制与重播
+│   ├── MoodyBlues.csproj      # net8.0-windows, WinExe + PublishSingleFile
+│   ├── Program.cs             # 入口 + 单实例
+│   ├── MainForm.cs            # 主窗体 + 热键分发 + 列表管理
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   ├── NativeMethods.cs       # P/Invoke（双钩子, SendInput, 热键, SetCursorPos）
+│   ├── RecordEngine.cs        # 双钩子录制引擎
+│   ├── PlaybackEngine.cs      # 按时间戳 SendInput 播放
+│   └── RecordStore.cs         # JSON 存取 + 数据模型
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
 │   ├── Klick/
 │   ├── DailyVoice/
-│   └── ThumbPin/
+│   ├── ThumbPin/
+│   └── MoodyBlues/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```

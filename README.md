@@ -9,10 +9,12 @@ WindowsTools/
 ├── Klick/          # 键盘/鼠标连点器（源码）
 ├── DailyVoice/     # 每日语音播放器（源码）
 ├── ThumbPin/       # 窗口置顶工具（源码）
+├── MoodyBlues/     # 操作录制与重播（源码）
 ├── Deck/           # 🃏 卡组 — 成品工具，双击即用
 │   ├── Klick/      # Klick.exe
 │   ├── DailyVoice/ # DailyVoice.exe
-│   └── ThumbPin/   # ThumbPin.exe
+│   ├── ThumbPin/   # ThumbPin.exe
+│   └── MoodyBlues/ # MoodyBlues.exe
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -60,7 +62,21 @@ WindowsTools/
 | 📋 **批量管理** | 一键取消全部置顶，显示已置顶窗口计数 |
 | 📦 **系统托盘** | 关闭窗口即隐藏到托盘 |
 
-**技术栈**：.NET 8.0 + WinForms + SetWindowPos
+**技术栈**：.NET 8.0 + WinForms + SetWindowPos + DWM
+
+### [MoodyBlues](MoodyBlues/) — 操作录制与重播
+
+键盘/鼠标操作的录制与精准回放。
+
+| 功能 | 说明 |
+|------|------|
+| 🔴 **录制** | F4 开始，录制所有键盘按键 + 鼠标点击（含绝对坐标） |
+| ⏹ **停止** | F5 停止录制，自动保存为 JSON |
+| ▶ **播放** | F6 按时间戳精准还原每一个事件 |
+| 📼 **列表管理** | 按时间倒序显示，可播放/删除任意一条录制 |
+| 🎯 **侧键支持** | 支持 XButton1/XButton2 侧键录制与播放 |
+
+**技术栈**：.NET 8.0 + WinForms + 双低级钩子 + SendInput
 
 ---
 
@@ -72,6 +88,8 @@ WindowsTools/
 # 开发者运行
 dotnet run --project Klick
 dotnet run --project DailyVoice
+dotnet run --project ThumbPin
+dotnet run --project MoodyBlues
 dotnet run --project ThumbPin
 
 # 重新发布到 Deck
