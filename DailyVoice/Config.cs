@@ -9,6 +9,10 @@ internal record Config
 {
     public string PlayTime { get; set; } = "13:55";
     public int Volume { get; set; } = 80;
+    /// <summary>视频文件全路径（null 表示未选择）</summary>
+    public string? VideoFile { get; set; }
+    /// <summary>视频独立播放时间 HH:mm</summary>
+    public string? VideoPlayTime { get; set; }
 }
 
 internal static class ConfigManager

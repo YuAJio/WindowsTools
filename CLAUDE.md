@@ -21,13 +21,16 @@ WindowsTools/
 │   ├── MainForm.Designer.cs   # UI 布局（手写，非 Designer 生成）
 │   └── NativeMethods.cs       # P/Invoke 封装（SendInput, 热键, 键盘钩子）
 ├── DailyVoice/                # 每日语音播放器
-│   ├── DailyVoice.csproj      # net8.0-windows, WinExe + PublishSingleFile + NAudio
+│   ├── DailyVoice.csproj      # net8.0-windows, WinExe + PublishSingleFile + NAudio + WebView2
 │   ├── Program.cs             # 入口 + 单实例 + 托盘
-│   ├── MainForm.cs            # 配置窗口逻辑
+│   ├── MainForm.cs            # 配置窗口逻辑（音频+视频）
 │   ├── MainForm.Designer.cs   # UI 布局（手写）
 │   ├── Config.cs              # 配置模型 + JSON 读写
-│   ├── AudioPlayer.cs         # NAudio 播放引擎（链式播放）
-│   └── Scheduler.cs           # 定时检测 + 洗牌队列
+│   ├── AudioPlayer.cs         # NAudio 播放引擎（连续流静音前导）
+│   ├── Scheduler.cs           # 定时检测 + 持久化洗牌队列 + 视频定时
+│   ├── SilenceSampleProvider.cs # ISampleProvider 静音生成器
+│   ├── ShuffleState.cs        # 洗牌状态持久化
+│   └── VideoPlayerForm.cs     # WebView2 全屏视频播放窗体
 ├── ThumbPin/                  # 窗口置顶工具
 │   ├── ThumbPin.csproj        # net8.0-windows, WinExe + PublishSingleFile
 │   ├── Program.cs             # 入口 + 单实例

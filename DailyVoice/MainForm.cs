@@ -11,6 +11,7 @@ public partial class MainForm : Form
         Path.GetDirectoryName(Environment.ProcessPath!)!;
 
     private readonly string _voiceDir = Path.Combine(BaseDir, "voice");
+    private readonly string _videoDir = Path.Combine(BaseDir, "video");
     private readonly Scheduler _scheduler;
     private readonly AudioPlayer _audioPlayer;
     private Config _config;
@@ -19,7 +20,10 @@ public partial class MainForm : Form
     {
         InitializeComponent();
 
+        // 文件夹迁移：旧版 video/ → voice/
+        MigrateFolders();
         Directory.CreateDirectory(_voiceDir);
+        Directory.CreateDirectory(_videoDir);
 
         // 加载配置
         _config = ConfigManager.Load();
@@ -39,6 +43,25 @@ public partial class MainForm : Form
     }
 
     // ═══════════════════════════════════════
+    //  文件夹迁移
+    // ═══════════════════════════════════════
+
+    /// <summary>
+    /// 如果用户旧版把音频放在 video/ 目录，迁移到 voice/
+    /// </summary>
+    private void MigrateFolders()
+    {
+        if (Directory.Exists(_videoDir) && !Directory.Exists(_voiceDir))
+        {
+            try
+            {
+                Directory.Move(_videoDir, _voiceDir);
+            }
+            catch { /* 尽力而为，迁移失败不阻塞启动 */ }
+        }
+    }
+
+    // ═══════════════════════════════════════
     //  UI 操作
     // ═══════════════════════════════════════
 
@@ -49,6 +72,18 @@ public partial class MainForm : Form
 
         tbVolume.Value = _config.Volume;
         lblVolumePercent.Text = $"{_config.Volume}%";
+
+        // 视频时间
+        if (!string.IsNullOrEmpty(_config.VideoPlayTime) &&
+            TimeSpan.TryParse(_config.VideoPlayTime, out var videoTs))
+            dtpVideoTime.Value = DateTime.Today.Add(videoTs);
+
+        // 视频文件
+        if (!string.IsNullOrEmpty(_config.VideoFile) && File.Exists(_config.VideoFile))
+        {
+            lblVideoFile.Text = Path.GetFileName(_config.VideoFile);
+            lblVideoFile.ForeColor = SystemColors.ControlText;
+        }
     }
 
     private void OnSave(object? sender, EventArgs e)
@@ -56,7 +91,9 @@ public partial class MainForm : Form
         _config = new Config
         {
             PlayTime = dtpTime.Value.ToString("HH:mm"),
-            Volume = tbVolume.Value
+            Volume = tbVolume.Value,
+            VideoFile = _config.VideoFile,
+            VideoPlayTime = dtpVideoTime.Value.ToString("HH:mm")
         };
         ConfigManager.Save(_config);
         _audioPlayer.Volume = _config.Volume / 100f;
@@ -80,6 +117,29 @@ public partial class MainForm : Form
     private void OnOpenFolder(object? sender, EventArgs e)
     {
         Process.Start("explorer.exe", _voiceDir);
+    }
+
+    private void OnBrowseVideo(object? sender, EventArgs e)
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Title = "选择视频文件",
+            Filter = "视频文件|*.mp4;*.mkv;*.avi;*.webm;*.mov|所有文件|*.*",
+            InitialDirectory = Directory.Exists(_videoDir) ? _videoDir : BaseDir
+        };
+        if (dlg.ShowDialog() == DialogResult.OK)
+        {
+            _config.VideoFile = dlg.FileName;
+            lblVideoFile.Text = Path.GetFileName(dlg.FileName);
+            lblVideoFile.ForeColor = SystemColors.ControlText;
+        }
+    }
+
+    private void OnClearVideo(object? sender, EventArgs e)
+    {
+        _config.VideoFile = null;
+        lblVideoFile.Text = "未选择视频";
+        lblVideoFile.ForeColor = Color.Gray;
     }
 
     private void RefreshFileList()

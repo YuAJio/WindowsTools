@@ -19,6 +19,12 @@ partial class MainForm
     private Button btnPreviewFile;
     private Label lblFileCount;
 
+    // 视频
+    private DateTimePicker dtpVideoTime;
+    private Label lblVideoFile;
+    private Button btnBrowseVideo;
+    private Button btnClearVideo;
+
     // 控制按钮
     private Button btnPlayNow;
     private Button btnStop;
@@ -47,7 +53,7 @@ partial class MainForm
     {
         this.Text = "DailyVoice — 每日语音播放";
         this.Icon = IconHelper.LoadFromResource("DailyVoice.app.png");
-        this.Size = new Size(420, 440);
+        this.Size = new Size(420, 550);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
@@ -159,11 +165,60 @@ partial class MainForm
         gbFiles.Controls.Add(btnRefreshFiles);
         gbFiles.Controls.Add(btnOpenFolder);
 
+        // ── 视频播放 ──
+        var gbVideo = new GroupBox
+        {
+            Text = "🎬 视频播放（独立定时）",
+            Location = new Point(12, 316),
+            Size = new Size(380, 80)
+        };
+        var lblVideoTime = new Label
+        {
+            Text = "每天",
+            Location = new Point(14, 24),
+            Size = new Size(35, 20)
+        };
+        dtpVideoTime = new DateTimePicker
+        {
+            Format = DateTimePickerFormat.Time,
+            ShowUpDown = true,
+            Location = new Point(52, 21),
+            Size = new Size(90, 23),
+            Value = DateTime.Today.AddHours(14) // 默认 14:00
+        };
+        lblVideoFile = new Label
+        {
+            Text = "未选择视频",
+            Location = new Point(14, 48),
+            Size = new Size(160, 20),
+            AutoEllipsis = true,
+            ForeColor = Color.Gray
+        };
+        btnBrowseVideo = new Button
+        {
+            Text = "📁 选择",
+            Location = new Point(185, 45),
+            Size = new Size(75, 25)
+        };
+        btnBrowseVideo.Click += OnBrowseVideo;
+        btnClearVideo = new Button
+        {
+            Text = "✕ 清除",
+            Location = new Point(266, 45),
+            Size = new Size(55, 25)
+        };
+        btnClearVideo.Click += OnClearVideo;
+        gbVideo.Controls.Add(lblVideoTime);
+        gbVideo.Controls.Add(dtpVideoTime);
+        gbVideo.Controls.Add(lblVideoFile);
+        gbVideo.Controls.Add(btnBrowseVideo);
+        gbVideo.Controls.Add(btnClearVideo);
+
         // ── 控制 ──
         var gbControl = new GroupBox
         {
             Text = "🎮 控制",
-            Location = new Point(12, 316),
+            Location = new Point(12, 404),
             Size = new Size(380, 52)
         };
         btnPlayNow = new Button
@@ -187,7 +242,7 @@ partial class MainForm
         lblStatus = new Label
         {
             Text = "⏸ 等待播放时间到达...",
-            Location = new Point(12, 378),
+            Location = new Point(12, 466),
             Size = new Size(260, 20),
             ForeColor = Color.DimGray
         };
@@ -196,7 +251,7 @@ partial class MainForm
         chkAutoStart = new CheckBox
         {
             Text = "开机自启",
-            Location = new Point(280, 378),
+            Location = new Point(280, 466),
             Size = new Size(110, 20),
             CheckAlign = ContentAlignment.MiddleRight
         };
@@ -205,19 +260,16 @@ partial class MainForm
         btnSave = new Button
         {
             Text = "💾 保存设置",
-            Location = new Point(285, 12),
-            Size = new Size(107, 50)
+            Location = new Point(295, 15),
+            Size = new Size(100, 45)
         };
         btnSave.Click += OnSave;
-
-        // 放一个重叠的 GroupBox 装保存按钮... 其实直接放表单上就行
-        btnSave.Location = new Point(295, 15);
-        btnSave.Size = new Size(100, 45);
 
         // ── 表单 ──
         this.Controls.Add(gbTime);
         this.Controls.Add(gbVolume);
         this.Controls.Add(gbFiles);
+        this.Controls.Add(gbVideo);
         this.Controls.Add(gbControl);
         this.Controls.Add(lblStatus);
         this.Controls.Add(chkAutoStart);
