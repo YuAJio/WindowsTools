@@ -1,11 +1,12 @@
 using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 
 namespace DailyVoice;
 
 /// <summary>
 /// NAudio 音频播放引擎 (⁎⁍̴̛ᴗ⁍̴̛⁎)
 /// 支持连续流播放：静音前导 + intro.mp3 + 正文 → 单次 WaveOutEvent 无间隙。
+/// 使用自研 ConcatenatedWaveProvider 替代 NAudio 的 SampleProvider 管线，
+/// 避免 ConcatenatingSampleProvider 兼容性问题。
 /// </summary>
 internal class AudioPlayer : IDisposable
 {
@@ -58,13 +59,12 @@ internal class AudioPlayer : IDisposable
 
         try
         {
-            var concatenated = new ConcatenatingSampleProvider(providers);
-            // WaveOutEvent.Init 需要 IWaveProvider，用 SampleToWaveProvider 包装
-            var waveProvider = new SampleToWaveProvider(concatenated);
+            // 自研串联 WaveProvider — 手动拼接 + PCM 转换，绕开 ConcatenatingSampleProvider
+            var concatenated = new ConcatenatedWaveProvider(format, providers);
 
             _waveOut = new WaveOutEvent();
             _waveOut.Volume = Volume;
-            _waveOut.Init(waveProvider);
+            _waveOut.Init(concatenated);
 
             _waveOut.PlaybackStopped += (_, _) =>
             {
@@ -150,5 +150,58 @@ internal class AudioPlayer : IDisposable
         if (_disposed) return;
         _disposed = true;
         Stop();
+    }
+}
+
+/// <summary>
+/// 自研 ISampleProvider 串联 + float→PCM 转换 IWaveProvider (⁎⁍̴̛ᴗ⁍̴̛⁎)
+/// 手动按序读取多个 ISampleProvider，实时转换为 16-bit PCM，
+/// 绕开 NAudio 的 ConcatenatingSampleProvider + SampleToWaveProvider 兼容性问题。
+/// </summary>
+internal sealed class ConcatenatedWaveProvider : IWaveProvider
+{
+    public WaveFormat WaveFormat { get; }
+
+    private readonly List<ISampleProvider> _providers;
+    private int _currentProvider;
+
+    public ConcatenatedWaveProvider(WaveFormat format, List<ISampleProvider> providers)
+    {
+        WaveFormat = format ?? throw new ArgumentNullException(nameof(format));
+        _providers = providers ?? throw new ArgumentNullException(nameof(providers));
+    }
+
+    public int Read(byte[] buffer, int offset, int count)
+    {
+        int bytesWritten = 0;
+
+        while (_currentProvider < _providers.Count && bytesWritten < count)
+        {
+            // 每次读一小块 float 采样，即时转换为 PCM
+            int maxSamples = (count - bytesWritten) / 2; // 16-bit = 2 bytes/sample
+            int samplesToRead = Math.Min(4096, maxSamples);
+            var floatBuffer = new float[samplesToRead];
+
+            int read = _providers[_currentProvider].Read(floatBuffer, 0, samplesToRead);
+
+            if (read == 0)
+            {
+                // 当前 provider 耗尽，切换到下一个
+                _currentProvider++;
+                continue;
+            }
+
+            // float → 16-bit PCM 即时转换 (⁎⁍̴̛ᴗ⁍̴̛⁎)
+            for (int i = 0; i < read; i++)
+            {
+                var clamped = Math.Clamp(floatBuffer[i], -1f, 1f);
+                var pcm = (short)(clamped * short.MaxValue);
+                buffer[offset + bytesWritten] = (byte)(pcm & 0xFF);
+                buffer[offset + bytesWritten + 1] = (byte)((pcm >> 8) & 0xFF);
+                bytesWritten += 2;
+            }
+        }
+
+        return bytesWritten;
     }
 }
