@@ -60,7 +60,10 @@ internal class AudioPlayer : IDisposable
         try
         {
             // 自研串联 WaveProvider — 手动拼接 + PCM 转换，绕开 ConcatenatingSampleProvider
-            var concatenated = new ConcatenatedWaveProvider(format, providers);
+            // format 来自 AudioFileReader (IEEE Float)，转换为 16-bit PCM WaveFormat
+            // 否则 WaveOutEvent 按 Float 配置声卡，实际写入 PCM → 数据错位 → 无声
+            var pcmFormat = new WaveFormat(format.SampleRate, 16, format.Channels);
+            var concatenated = new ConcatenatedWaveProvider(pcmFormat, providers);
 
             _waveOut = new WaveOutEvent();
             _waveOut.Volume = Volume;
