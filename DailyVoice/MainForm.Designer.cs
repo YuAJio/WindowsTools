@@ -256,14 +256,15 @@ partial class MainForm
             CheckAlign = ContentAlignment.MiddleRight
         };
 
-        // ── 保存按钮 ──
+        // ── 保存按钮（放在控制区，用户配置完后最自然找的地方）──
         btnSave = new Button
         {
             Text = "💾 保存设置",
-            Location = new Point(295, 15),
-            Size = new Size(100, 45)
+            Location = new Point(220, 19),
+            Size = new Size(160, 24)
         };
         btnSave.Click += OnSave;
+        gbControl.Controls.Add(btnSave);
 
         // ── 表单 ──
         this.Controls.Add(gbTime);
@@ -273,7 +274,6 @@ partial class MainForm
         this.Controls.Add(gbControl);
         this.Controls.Add(lblStatus);
         this.Controls.Add(chkAutoStart);
-        this.Controls.Add(btnSave);
         this.Resize += OnFormResize;
         this.FormClosing += OnFormClosing;
     }
