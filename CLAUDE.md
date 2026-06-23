@@ -21,7 +21,7 @@ WindowsTools/
 │   ├── MainForm.Designer.cs   # UI 布局（手写，非 Designer 生成）
 │   └── NativeMethods.cs       # P/Invoke 封装（SendInput, 热键, 键盘钩子）
 ├── DailyVoice/                # 每日语音播放器
-│   ├── DailyVoice.csproj      # net8.0-windows, WinExe + PublishSingleFile + NAudio + WebView2
+│   ├── DailyVoice.csproj      # net8.0-windows, WinExe + SelfContained + PublishSingleFile + NAudio
 │   ├── Program.cs             # 入口 + 单实例 + 托盘
 │   ├── MainForm.cs            # 配置窗口逻辑（音频+视频）
 │   ├── MainForm.Designer.cs   # UI 布局（手写）

@@ -10,9 +10,10 @@
     <AssemblyName>DailyVoice</AssemblyName>
     <RootNamespace>DailyVoice</RootNamespace>
 
-    <!-- 单文件发布：Deck 目录扔一个 exe 直接双击启动 (⁎⁍̴̛ᴗ⁍̴̛⁎) -->
+    <!-- 单文件独立发布：自带运行时，无需安装 .NET (⁎⁍̴̛ᴗ⁍̴̛⁎) -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>false</SelfContained>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeNativeContentInSingleFile>true</IncludeNativeContentInSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
