@@ -142,6 +142,26 @@ public partial class MainForm : Form
         lblVideoFile.ForeColor = Color.Gray;
     }
 
+    private void OnPlayVideo(object? sender, EventArgs e)
+    {
+        if (string.IsNullOrEmpty(_config.VideoFile) || !File.Exists(_config.VideoFile))
+        {
+            MessageBox.Show("请先选择一个视频文件喵~", "DailyVoice",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        try
+        {
+            using var videoForm = new VideoPlayerForm(_config.VideoFile);
+            videoForm.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"DailyVoice 立即播放视频失败: {ex.Message}");
+        }
+    }
+
     private void RefreshFileList()
     {
         var files = _scheduler.GetVoiceFiles()

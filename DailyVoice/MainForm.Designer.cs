@@ -24,6 +24,7 @@ partial class MainForm
     private Label lblVideoFile;
     private Button btnBrowseVideo;
     private Button btnClearVideo;
+    private Button btnPlayVideo;
 
     // 控制按钮
     private Button btnPlayNow;
@@ -190,27 +191,35 @@ partial class MainForm
         {
             Text = "未选择视频",
             Location = new Point(14, 48),
-            Size = new Size(160, 20),
+            Size = new Size(100, 20),
             AutoEllipsis = true,
             ForeColor = Color.Gray
         };
+        btnPlayVideo = new Button
+        {
+            Text = "▶ 播放",
+            Location = new Point(118, 45),
+            Size = new Size(65, 25)
+        };
+        btnPlayVideo.Click += OnPlayVideo;
         btnBrowseVideo = new Button
         {
             Text = "📁 选择",
-            Location = new Point(185, 45),
-            Size = new Size(75, 25)
+            Location = new Point(188, 45),
+            Size = new Size(65, 25)
         };
         btnBrowseVideo.Click += OnBrowseVideo;
         btnClearVideo = new Button
         {
             Text = "✕ 清除",
-            Location = new Point(266, 45),
+            Location = new Point(258, 45),
             Size = new Size(55, 25)
         };
         btnClearVideo.Click += OnClearVideo;
         gbVideo.Controls.Add(lblVideoTime);
         gbVideo.Controls.Add(dtpVideoTime);
         gbVideo.Controls.Add(lblVideoFile);
+        gbVideo.Controls.Add(btnPlayVideo);
         gbVideo.Controls.Add(btnBrowseVideo);
         gbVideo.Controls.Add(btnClearVideo);
 
