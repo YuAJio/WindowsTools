@@ -117,9 +117,10 @@ public partial class MainForm : Form
         }
         // qIdx == 0 (最佳): 不传 -f，yt-dlp 默认自动选最优
 
-        // 视频模式：让 yt-dlp 合并最优视频+音频流为 mp4
+        // 视频模式：合并为 mp4，音频从 Opus 转 AAC（WMP 不支持 Opus）
         if (!isAudio)
-            argList.AddRange(["--merge-output-format", "mp4"]);
+            argList.AddRange(["--merge-output-format", "mp4",
+                "--ppa", "Merger:-c copy -c:a aac -b:a 192k"]);
 
         // 指定 ffmpeg 位置
         if (ffmpegPath != null)
