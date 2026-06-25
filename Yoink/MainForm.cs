@@ -121,18 +121,18 @@ public partial class MainForm : Form
         if (!isAudio)
             argList.AddRange(["--merge-output-format", "mp4"]);
 
-        // 指定 ffmpeg 位置，避免 PATH 中 deno.exe 等干扰
+        // 指定 ffmpeg 目录，避免 PATH 污染触发 deno.exe
         if (ffmpegPath != null)
-            argList.AddRange(["--ffmpeg-location", ffmpegPath]);
+            argList.AddRange(["--ffmpeg-location", Path.GetDirectoryName(ffmpegPath)!]);
 
         argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
         Log($"⚙ yt-dlp: {ytDlpPath}");
         Log($"📂 输出: {outputDir}");
-        Log($"🎵 音频模式: {isAudio}");
-        if (isAudio && ffmpegPath != null)
-            Log($"🔧 ffmpeg: {ffmpegPath}");
+        Log($"🎬 模式: {(isAudio ? "仅音频" : $"视频 ({cbQuality.SelectedItem})")}");
+        Log($"🔧 ffmpeg: {(ffmpegPath ?? "未找到")}");
+        Log($"📋 参数: yt-dlp {string.Join(" ", argList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a))}");
 
         // 保存配置
         _config.AudioOnly = isAudio;
