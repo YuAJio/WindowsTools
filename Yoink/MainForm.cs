@@ -156,7 +156,8 @@ public partial class MainForm : Form
                 "--add-header", "Origin:https://www.bilibili.com"]);
         else if (url.Contains("douyin.com"))
             argList.AddRange(["--add-header", "Referer:https://www.douyin.com",
-                "--add-header", "Origin:https://www.douyin.com"]);
+                "--add-header", "Origin:https://www.douyin.com",
+                "--user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1"]);
 
         argList.AddRange(["-N", "4", "--continue", "-o", outputTemplate,
             "--no-playlist", "--progress", "--newline", url]);
