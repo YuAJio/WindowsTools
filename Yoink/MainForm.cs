@@ -90,9 +90,6 @@ public partial class MainForm : Form
         // 查找 ffmpeg（音视频合并/提取需要）
         var ffmpegPath = ResolvePath(_config.FfmpegPath, "ffmpeg.exe");
 
-        // 查找 deno（YouTube JS 解析需要）
-        var denoPath = ResolvePath(null, "deno.exe");
-
         // 确保输出目录存在
         var outputDir = txtOutputDir.Text.Trim();
         if (string.IsNullOrEmpty(outputDir))
@@ -128,11 +125,8 @@ public partial class MainForm : Form
         if (ffmpegPath != null)
             argList.AddRange(["--ffmpeg-location", Path.GetDirectoryName(ffmpegPath)!]);
 
-        // JS 运行时：优先 deno，否则用 Android 客户端 API 绕过 JS 解析
-        if (denoPath != null)
-            argList.AddRange(["--js-runtimes", $"deno:{denoPath}"]);
-        else
-            argList.AddRange(["--extractor-args", "youtube:player_client=android,ios"]);
+        // 禁用 JS 运行时检测 — 避免 deno 架构不匹配弹窗
+        argList.AddRange(["--js-runtimes", "none"]);
 
         argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
@@ -141,7 +135,6 @@ public partial class MainForm : Form
         Log($"📂 输出: {outputDir}");
         Log($"🎬 模式: {(isAudio ? "仅音频" : $"视频 ({cbQuality.SelectedItem})")}");
         Log($"🔧 ffmpeg: {(ffmpegPath ?? "未找到")}");
-        Log($"🦕 deno: {(denoPath ?? "未找到，YouTube 可能缺格式")}");
         Log($"📋 参数: yt-dlp {string.Join(" ", argList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a))}");
 
         // 保存配置
