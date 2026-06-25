@@ -99,25 +99,32 @@ public partial class MainForm : Form
         // 构建命令行
         var isAudio = rbAudio.Checked;
         var qIdx = cbQuality.SelectedIndex;
-        var qualityArg = isAudio
-            ? "bestaudio"
-            : qIdx switch
-            {
-                1 => "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
-                2 => "bestvideo[height<=720]+bestaudio/best[height<=720]",
-                3 => "bestvideo[height<=480]+bestaudio/best[height<=480]",
-                4 => "bestvideo[height<=360]+bestaudio/best[height<=360]",
-                _ => "best"
-            };
 
         var outputTemplate = Path.Combine(outputDir, "%(title).200s.%(ext)s");
 
         // 用 ArgumentList 逐条传参，自动转义 & < > 等特殊字符
-        var argList = new List<string> { "-f", qualityArg };
+        var argList = new List<string>();
+
+        // 格式选择 — 最佳画质时不传 -f，让 yt-dlp 自动选最优格式合并
+        if (isAudio)
+        {
+            argList.AddRange(["-f", "bestaudio", "-x", "--audio-format", "mp3", "--audio-quality", "0"]);
+        }
+        else if (qIdx >= 1)
+        {
+            var height = qIdx switch { 1 => 1080, 2 => 720, 3 => 480, 4 => 360, _ => 1080 };
+            argList.AddRange(["-f", $"bestvideo[height<={height}]+bestaudio/best[height<={height}]"]);
+        }
+        // qIdx == 0 (最佳): 不传 -f，yt-dlp 默认自动选最优
+
+        // 视频模式：让 yt-dlp 合并最优视频+音频流为 mp4
         if (!isAudio)
             argList.AddRange(["--merge-output-format", "mp4"]);
-        else
-            argList.AddRange(["-x", "--audio-format", "mp3", "--audio-quality", "0"]);
+
+        // 指定 ffmpeg 位置，避免 PATH 中 deno.exe 等干扰
+        if (ffmpegPath != null)
+            argList.AddRange(["--ffmpeg-location", ffmpegPath]);
+
         argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
@@ -172,13 +179,6 @@ public partial class MainForm : Form
 
         foreach (var a in argList)
             psi.ArgumentList.Add(a);
-
-        // yt-dlp 需要 ffmpeg 在 PATH 中做音频转换
-        if (ffmpegPath != null)
-        {
-            var ffmpegDir = Path.GetDirectoryName(ffmpegPath)!;
-            psi.Environment["PATH"] = $"{ffmpegDir};{Environment.GetEnvironmentVariable("PATH")}";
-        }
 
         using var proc = new Process { StartInfo = psi };
         _currentProcess = proc;
