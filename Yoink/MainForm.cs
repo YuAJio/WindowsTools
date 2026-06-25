@@ -111,15 +111,14 @@ public partial class MainForm : Form
             };
 
         var outputTemplate = Path.Combine(outputDir, "%(title).200s.%(ext)s");
-        var args = $"-f \"{qualityArg}\" --merge-output-format mp4 -o \"{outputTemplate}\" --no-playlist --progress --newline \"{url}\"";
 
-        if (isAudio)
-        {
-            // 下载最优音频流 → 提取为 mp3
-            args = $"-f bestaudio -x --audio-format mp3 --audio-quality 0 " +
-                   $"-o \"{Path.Combine(outputDir, "%(title).200s.%(ext)s")}\" " +
-                   $"--no-playlist --progress --newline \"{url}\"";
-        }
+        // 用 ArgumentList 逐条传参，自动转义 & < > 等特殊字符
+        var argList = new List<string> { "-f", qualityArg };
+        if (!isAudio)
+            argList.AddRange(["--merge-output-format", "mp4"]);
+        else
+            argList.AddRange(["-x", "--audio-format", "mp3", "--audio-quality", "0"]);
+        argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
         Log($"⚙ yt-dlp: {ytDlpPath}");
@@ -141,7 +140,7 @@ public partial class MainForm : Form
 
         try
         {
-            await Task.Run(() => RunDownload(ytDlpPath, args, ffmpegPath, token), token);
+            await Task.Run(() => RunDownload(ytDlpPath, argList, ffmpegPath, token), token);
         }
         catch (OperationCanceledException)
         {
@@ -157,13 +156,12 @@ public partial class MainForm : Form
         }
     }
 
-    private void RunDownload(string ytDlpPath, string args, string? ffmpegPath,
+    private void RunDownload(string ytDlpPath, List<string> argList, string? ffmpegPath,
         CancellationToken token)
     {
         var psi = new ProcessStartInfo
         {
             FileName = ytDlpPath,
-            Arguments = args,
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
@@ -171,6 +169,9 @@ public partial class MainForm : Form
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8
         };
+
+        foreach (var a in argList)
+            psi.ArgumentList.Add(a);
 
         // yt-dlp 需要 ffmpeg 在 PATH 中做音频转换
         if (ffmpegPath != null)
