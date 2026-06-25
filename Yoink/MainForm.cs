@@ -124,11 +124,15 @@ public partial class MainForm : Form
         if (!isAudio)
             argList.AddRange(["--merge-output-format", "mp4"]);
 
-        // 指定 ffmpeg / deno 位置，避免 PATH 污染
+        // 指定 ffmpeg 位置
         if (ffmpegPath != null)
             argList.AddRange(["--ffmpeg-location", Path.GetDirectoryName(ffmpegPath)!]);
+
+        // JS 运行时：优先 deno，否则用 Android 客户端 API 绕过 JS 解析
         if (denoPath != null)
             argList.AddRange(["--js-runtimes", $"deno:{denoPath}"]);
+        else
+            argList.AddRange(["--extractor-args", "youtube:player_client=android,ios"]);
 
         argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
