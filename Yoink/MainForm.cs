@@ -141,9 +141,7 @@ public partial class MainForm : Form
         }
         else if (!string.IsNullOrEmpty(cookieBrowser) && cookieBrowser != "无")
         {
-            // 去掉 "(需关闭)" 后缀
-            var browserName = cookieBrowser.Split(' ')[0].ToLowerInvariant();
-            argList.AddRange(["--cookies-from-browser", browserName]);
+            argList.AddRange(["--cookies-from-browser", cookieBrowser.ToLowerInvariant()]);
         }
 
         // 通用请求头 — 修 B站 412 等防盗链
