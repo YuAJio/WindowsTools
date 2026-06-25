@@ -249,10 +249,13 @@ public partial class MainForm : Form
         proc.BeginErrorReadLine();
         proc.WaitForExit();
 
+        // 捕获退出码再跨线程回调 — proc 在 using 块结束前会被 Dispose
+        int exitCode = proc.ExitCode;
+
         // 更新 UI 完成状态
         this.BeginInvoke(() =>
         {
-            if (proc.ExitCode == 0)
+            if (exitCode == 0)
             {
                 pbDownload.Value = 100;
                 lblProgress.Text = "✅ 下载完成！";
@@ -262,9 +265,9 @@ public partial class MainForm : Form
             }
             else if (!token.IsCancellationRequested)
             {
-                lblProgress.Text = $"❌ 错误 (exit={proc.ExitCode})";
+                lblProgress.Text = $"❌ 错误 (exit={exitCode})";
                 lblProgress.ForeColor = Color.DarkRed;
-                Log($"❌ yt-dlp 退出码: {proc.ExitCode}");
+                Log($"❌ yt-dlp 退出码: {exitCode}");
             }
         });
 
