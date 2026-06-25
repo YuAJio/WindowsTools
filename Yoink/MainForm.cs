@@ -129,7 +129,10 @@ public partial class MainForm : Form
         // 禁用 JS 运行时检测 — 避免 deno 架构不匹配弹窗
         argList.AddRange(["--js-runtimes", "none"]);
 
-        argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
+        // 通用请求头 — 修 B站 412 等防盗链
+        argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
+            "--add-header", "Origin:https://www.bilibili.com",
+            "-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
         Log($"⚙ yt-dlp: {ytDlpPath}");
