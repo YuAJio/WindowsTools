@@ -111,14 +111,14 @@ public partial class MainForm : Form
             };
 
         var outputTemplate = Path.Combine(outputDir, "%(title).200s.%(ext)s");
-        var args = $"-f \"{qualityArg}\" --merge-output-format mp4 -o \"{outputTemplate}\" --no-playlist --progress --newline";
+        var args = $"-f \"{qualityArg}\" --merge-output-format mp4 -o \"{outputTemplate}\" --no-playlist --progress --newline \"{url}\"";
 
         if (isAudio)
         {
             // 下载最优音频流 → 提取为 mp3
             args = $"-f bestaudio -x --audio-format mp3 --audio-quality 0 " +
                    $"-o \"{Path.Combine(outputDir, "%(title).200s.%(ext)s")}\" " +
-                   $"--no-playlist --progress --newline";
+                   $"--no-playlist --progress --newline \"{url}\"";
         }
 
         Log($"▶ Yoink! {url}");
