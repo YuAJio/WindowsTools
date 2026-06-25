@@ -180,6 +180,12 @@ public partial class MainForm : Form
             StandardErrorEncoding = System.Text.Encoding.UTF8
         };
 
+        // 滤掉 C:\Software\tydlp\，防止 yt-dlp 扫到 aarch64 deno.exe
+        var currentPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+        psi.Environment["PATH"] = string.Join(";",
+            currentPath.Split(';').Where(d =>
+                !d.Contains("tydlp", StringComparison.OrdinalIgnoreCase)));
+
         foreach (var a in argList)
             psi.ArgumentList.Add(a);
 
