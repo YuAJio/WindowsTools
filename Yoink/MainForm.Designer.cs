@@ -136,7 +136,7 @@ partial class MainForm
             Size = new Size(80, 23),
             DropDownStyle = ComboBoxStyle.DropDownList
         };
-        cbCookie.Items.AddRange(["无", "Edge", "Chrome", "Firefox"]);
+        cbCookie.Items.AddRange(["无", "Edge (需关闭)", "Chrome (需关闭)", "Firefox (需关闭)", "cookies.txt"]);
         cbCookie.SelectedIndex = 0;
         gbOptions.Controls.Add(rbVideo);
         gbOptions.Controls.Add(rbAudio);

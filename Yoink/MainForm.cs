@@ -131,8 +131,20 @@ public partial class MainForm : Form
 
         // Cookie — 抖音/X 等需要登录态的站点
         var cookieBrowser = cbCookie.SelectedItem?.ToString();
-        if (!string.IsNullOrEmpty(cookieBrowser) && cookieBrowser != "无")
-            argList.AddRange(["--cookies-from-browser", cookieBrowser.ToLowerInvariant()]);
+        if (cookieBrowser == "cookies.txt")
+        {
+            var cookieFile = Path.Combine(BaseDir, "usecase", "cookies.txt");
+            if (File.Exists(cookieFile))
+                argList.AddRange(["--cookies", cookieFile]);
+            else
+                Log("⚠ cookies.txt 不存在，请放入 usecase/cookies.txt");
+        }
+        else if (!string.IsNullOrEmpty(cookieBrowser) && cookieBrowser != "无")
+        {
+            // 去掉 "(需关闭)" 后缀
+            var browserName = cookieBrowser.Split(' ')[0].ToLowerInvariant();
+            argList.AddRange(["--cookies-from-browser", browserName]);
+        }
 
         // 通用请求头 — 修 B站 412 等防盗链
         argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
