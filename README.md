@@ -10,11 +10,13 @@ WindowsTools/
 ├── DailyVoice/     # 每日语音播放器（源码）
 ├── ThumbPin/       # 窗口置顶工具（源码）
 ├── MoodyBlues/     # 操作录制与重播（源码）
+├── Yoink/          # 媒体下载器（源码）
 ├── Deck/           # 🃏 卡组 — 成品工具，双击即用
 │   ├── Klick/      # Klick.exe
 │   ├── DailyVoice/ # DailyVoice.exe
 │   ├── ThumbPin/   # ThumbPin.exe
-│   └── MoodyBlues/ # MoodyBlues.exe
+│   ├── MoodyBlues/ # MoodyBlues.exe
+│   └── Yoink/      # Yoink.exe
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -78,6 +80,21 @@ WindowsTools/
 | 🎯 **侧键支持** | 支持 XButton1/XButton2 侧键录制与播放 |
 
 **技术栈**：.NET 8.0 + WinForms + 双低级钩子 + SendInput
+
+### [Yoink](Yoink/) — 媒体下载器
+
+粘贴链接一键下载视频/音频，yt-dlp GUI 套皮。
+
+| 功能 | 说明 |
+|------|------|
+| 🎬 **视频下载** | 最佳 / 1080p / 720p / 480p / 360p 可选 |
+| 🎵 **音频提取** | 下载最优音频流 → 自动 ffmpeg 提取 mp3 |
+| 📊 **实时进度** | 百分比 + 速度 + ETA，yt-dlp stdout 实时解析 |
+| ⏹ **取消下载** | 中途可取消，自动 kill yt-dlp 子进程 |
+| 📂 **自定输出** | 指定保存目录，一键切到 voice/ 或 video/ |
+| 🔍 **自动定位** | 程序目录 → tools/ → C:\Software\tydlp\ → PATH 四级查找 |
+
+**技术栈**：.NET 8.0 + WinForms + yt-dlp + ffmpeg
 
 ---
 

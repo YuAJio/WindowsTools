@@ -46,11 +46,18 @@ WindowsTools/
 │   ├── RecordEngine.cs        # 双钩子录制引擎
 │   ├── PlaybackEngine.cs      # 按时间戳 SendInput 播放
 │   └── RecordStore.cs         # JSON 存取 + 数据模型
+├── Yoink/                     # 媒体下载器
+│   ├── Yoink.csproj           # net8.0-windows, WinExe + SelfContained + PublishSingleFile
+│   ├── Program.cs             # 入口 + 单实例
+│   ├── MainForm.cs            # 主窗体 + yt-dlp 进程管理 + 进度解析
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   └── Config.cs              # 配置模型 + JSON 读写
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
 │   ├── Klick/
 │   ├── DailyVoice/
 │   ├── ThumbPin/
-│   └── MoodyBlues/
+│   ├── MoodyBlues/
+│   └── Yoink/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```
