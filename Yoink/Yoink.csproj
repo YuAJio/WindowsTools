@@ -10,10 +10,9 @@
     <AssemblyName>Yoink</AssemblyName>
     <RootNamespace>Yoink</RootNamespace>
 
-    <!-- 单文件独立发布 — 自带运行时，无需安装 .NET (⁎⁍̴̛ᴗ⁍̴̛⁎) -->
+    <!-- 单文件发布，依赖系统 .NET 运行时 (⁎⁍̴̛ᴗ⁍̴̛⁎) -->
     <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
     <IncludeNativeContentInSingleFile>true</IncludeNativeContentInSingleFile>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
