@@ -150,10 +150,15 @@ public partial class MainForm : Form
             argList.AddRange(["--cookies-from-browser", cookieBrowser.ToLowerInvariant()]);
         }
 
-        // 通用请求头 — 修 B站 412 等防盗链
-        argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
-            "--add-header", "Origin:https://www.bilibili.com",
-            "-N", "4", "--continue", "-o", outputTemplate,
+        // 请求头 — 按站点自适应
+        if (url.Contains("bilibili.com"))
+            argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
+                "--add-header", "Origin:https://www.bilibili.com"]);
+        else if (url.Contains("douyin.com"))
+            argList.AddRange(["--add-header", "Referer:https://www.douyin.com",
+                "--add-header", "Origin:https://www.douyin.com"]);
+
+        argList.AddRange(["-N", "4", "--continue", "-o", outputTemplate,
             "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
