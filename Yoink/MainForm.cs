@@ -135,7 +135,13 @@ public partial class MainForm : Form
         {
             var cookieFile = Path.Combine(BaseDir, "usecase", "cookies.txt");
             if (File.Exists(cookieFile))
-                argList.AddRange(["--cookies", cookieFile]);
+            {
+                // yt-dlp 会回写覆盖 cookies 文件，先复制到临时文件保护原件
+                var tmpCookie = Path.GetTempFileName();
+                File.Copy(cookieFile, tmpCookie, overwrite: true);
+                argList.AddRange(["--cookies", tmpCookie]);
+                Log("🍪 cookies.txt → 临时副本（原件受保护）");
+            }
             else
                 Log("⚠ cookies.txt 不存在，请放入 usecase/cookies.txt");
         }
