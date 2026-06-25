@@ -18,6 +18,9 @@ Deck/*/
 # Releases — zip 包走 GitHub Release，不进仓库
 Releases/
 
+# Usecase — 第三方工具包（exe 太大不进仓库）
+usecase/
+
 # OS
 Thumbs.db
 .DS_Store

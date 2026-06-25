@@ -87,8 +87,11 @@ public partial class MainForm : Form
             return;
         }
 
-        // 查找 ffmpeg（音频提取需要）
+        // 查找 ffmpeg（音视频合并/提取需要）
         var ffmpegPath = ResolvePath(_config.FfmpegPath, "ffmpeg.exe");
+
+        // 查找 deno（YouTube JS 解析需要）
+        var denoPath = ResolvePath(null, "deno.exe");
 
         // 确保输出目录存在
         var outputDir = txtOutputDir.Text.Trim();
@@ -121,9 +124,11 @@ public partial class MainForm : Form
         if (!isAudio)
             argList.AddRange(["--merge-output-format", "mp4"]);
 
-        // 指定 ffmpeg 目录，避免 PATH 污染触发 deno.exe
+        // 指定 ffmpeg / deno 位置，避免 PATH 污染
         if (ffmpegPath != null)
             argList.AddRange(["--ffmpeg-location", Path.GetDirectoryName(ffmpegPath)!]);
+        if (denoPath != null)
+            argList.AddRange(["--js-runtimes", $"deno:{denoPath}"]);
 
         argList.AddRange(["-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
 
@@ -132,6 +137,7 @@ public partial class MainForm : Form
         Log($"📂 输出: {outputDir}");
         Log($"🎬 模式: {(isAudio ? "仅音频" : $"视频 ({cbQuality.SelectedItem})")}");
         Log($"🔧 ffmpeg: {(ffmpegPath ?? "未找到")}");
+        Log($"🦕 deno: {(denoPath ?? "未找到，YouTube 可能缺格式")}");
         Log($"📋 参数: yt-dlp {string.Join(" ", argList.Select(a => a.Contains(' ') ? $"\"{a}\"" : a))}");
 
         // 保存配置
@@ -298,11 +304,15 @@ public partial class MainForm : Form
         var local = Path.Combine(BaseDir, exeName);
         if (File.Exists(local)) return local;
 
-        // 3. tools/ 子目录
+        // 3. usecase/ 子目录（便携部署首选）
+        local = Path.Combine(BaseDir, "usecase", exeName);
+        if (File.Exists(local)) return local;
+
+        // 4. tools/ 子目录（旧兼容）
         local = Path.Combine(BaseDir, "tools", exeName);
         if (File.Exists(local)) return local;
 
-        // 4. 固定路径 C:\Software\tydlp\
+        // 5. 固定路径 C:\Software\tydlp\
         local = Path.Combine(@"C:\Software\tydlp", exeName);
         if (File.Exists(local)) return local;
 
