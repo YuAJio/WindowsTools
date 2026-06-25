@@ -132,7 +132,8 @@ public partial class MainForm : Form
         // 通用请求头 — 修 B站 412 等防盗链
         argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
             "--add-header", "Origin:https://www.bilibili.com",
-            "-N", "4", "-o", outputTemplate, "--no-playlist", "--progress", "--newline", url]);
+            "-N", "4", "--continue", "-o", outputTemplate,
+            "--no-playlist", "--progress", "--newline", url]);
 
         Log($"▶ Yoink! {url}");
         Log($"⚙ yt-dlp: {ytDlpPath}");
