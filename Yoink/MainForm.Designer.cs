@@ -12,10 +12,11 @@ partial class MainForm
     private RadioButton rbVideo;
     private RadioButton rbAudio;
 
-    // 质量 + 输出
+    // 质量 + 输出 + Cookie
     private ComboBox cbQuality;
     private TextBox txtOutputDir;
     private Button btnBrowseDir;
+    private ComboBox cbCookie;
 
     // 操作
     private Button btnDownload;
@@ -43,7 +44,7 @@ partial class MainForm
     private void InitializeComponent()
     {
         this.Text = "Yoink — 媒体下载器";
-        this.Size = new Size(500, 520);
+        this.Size = new Size(500, 545);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
@@ -75,7 +76,7 @@ partial class MainForm
         {
             Text = "📥 下载选项",
             Location = new Point(12, 78),
-            Size = new Size(460, 80)
+            Size = new Size(460, 105)
         };
         rbVideo = new RadioButton
         {
@@ -123,6 +124,20 @@ partial class MainForm
             Size = new Size(28, 25)
         };
         btnBrowseDir.Click += OnBrowseOutput;
+        var lblCookie = new Label
+        {
+            Text = "🍪",
+            Location = new Point(14, 74),
+            Size = new Size(28, 20)
+        };
+        cbCookie = new ComboBox
+        {
+            Location = new Point(42, 72),
+            Size = new Size(80, 23),
+            DropDownStyle = ComboBoxStyle.DropDownList
+        };
+        cbCookie.Items.AddRange(["无", "Edge", "Chrome", "Firefox"]);
+        cbCookie.SelectedIndex = 0;
         gbOptions.Controls.Add(rbVideo);
         gbOptions.Controls.Add(rbAudio);
         gbOptions.Controls.Add(lblQuality);
@@ -130,12 +145,14 @@ partial class MainForm
         gbOptions.Controls.Add(lblOutDir);
         gbOptions.Controls.Add(txtOutputDir);
         gbOptions.Controls.Add(btnBrowseDir);
+        gbOptions.Controls.Add(lblCookie);
+        gbOptions.Controls.Add(cbCookie);
 
         // ── 操作按钮 ──
         var gbAction = new GroupBox
         {
             Text = "🎮 操作",
-            Location = new Point(12, 166),
+            Location = new Point(12, 191),
             Size = new Size(460, 52)
         };
         btnDownload = new Button
@@ -162,7 +179,7 @@ partial class MainForm
         var gbProgress = new GroupBox
         {
             Text = "📊 进度",
-            Location = new Point(12, 226),
+            Location = new Point(12, 251),
             Size = new Size(460, 70)
         };
         pbDownload = new ProgressBar
@@ -194,7 +211,7 @@ partial class MainForm
         var gbLog = new GroupBox
         {
             Text = "📋 日志",
-            Location = new Point(12, 304),
+            Location = new Point(12, 329),
             Size = new Size(460, 170)
         };
         txtLog = new TextBox

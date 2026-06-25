@@ -129,6 +129,11 @@ public partial class MainForm : Form
         // 禁用 JS 运行时检测 — 避免 deno 架构不匹配弹窗
         argList.AddRange(["--js-runtimes", "none"]);
 
+        // Cookie — 抖音/X 等需要登录态的站点
+        var cookieBrowser = cbCookie.SelectedItem?.ToString();
+        if (!string.IsNullOrEmpty(cookieBrowser) && cookieBrowser != "无")
+            argList.AddRange(["--cookies-from-browser", cookieBrowser.ToLowerInvariant()]);
+
         // 通用请求头 — 修 B站 412 等防盗链
         argList.AddRange(["--add-header", "Referer:https://www.bilibili.com",
             "--add-header", "Origin:https://www.bilibili.com",
@@ -348,6 +353,7 @@ public partial class MainForm : Form
         btnCancel.Enabled = downloading;
         txtUrl.ReadOnly = downloading;
         cbQuality.Enabled = !downloading;
+        cbCookie.Enabled = !downloading;
         rbVideo.Enabled = !downloading;
         rbAudio.Enabled = !downloading;
 
