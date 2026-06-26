@@ -69,7 +69,7 @@ WindowsTools/
 
 ### [MoodyBlues](MoodyBlues/) — 操作录制与重播
 
-键盘/鼠标操作的录制与精准回放。
+"Moody Blues! Replay the past!" — 键盘/鼠标操作的录制与精准回放。
 
 | 功能 | 说明 |
 |------|------|
