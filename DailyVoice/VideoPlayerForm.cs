@@ -111,7 +111,8 @@ internal sealed class VideoPlayerForm : Form
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VideoLAN", "VLC", "vlc.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "VideoLAN", "VLC", "vlc.exe"),
             @"C:\Program Files\VideoLAN\VLC\vlc.exe",
-            @"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe"
+            @"C:\Program Files (x86)\VideoLAN\VLC\vlc.exe",
+            @"C:\Software\VLC\vlc.exe",
         };
 
         foreach (var path in candidates)
