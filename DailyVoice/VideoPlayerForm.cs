@@ -46,7 +46,7 @@ internal sealed class VideoPlayerForm : Form
                 proc = Process.Start(new ProcessStartInfo
                 {
                     FileName = vlcPath,
-                    Arguments = $"--fullscreen --play-and-exit --no-video-title-show --no-qt-fs-controller \"{_videoPath}\"",
+                    Arguments = $"--fullscreen --play-and-exit --no-video-title-show --no-qt-fs-controller --video-on-top \"{_videoPath}\"",
                     UseShellExecute = false,
                     CreateNoWindow = true
                 });
