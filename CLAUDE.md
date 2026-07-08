@@ -52,12 +52,19 @@ WindowsTools/
 │   ├── MainForm.cs            # 主窗体 + yt-dlp 进程管理 + 进度解析
 │   ├── MainForm.Designer.cs   # UI 布局（手写）
 │   └── Config.cs              # 配置模型 + JSON 读写
+├── ClaudeMaster/              # Claude Code 环境配置器
+│   ├── ClaudeMaster.csproj    # net8.0-windows, WinExe + PublishSingleFile
+│   ├── Program.cs             # 入口 + 单实例 Mutex
+│   ├── MainForm.cs            # 环境检测 + npm 安装 + API 配置逻辑
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   └── IconHelper.cs          # 嵌入式图标加载器
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
 │   ├── Klick/
 │   ├── DailyVoice/
 │   ├── ThumbPin/
 │   ├── MoodyBlues/
-│   └── Yoink/
+│   ├── Yoink/
+│   └── ClaudeMaster/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```
@@ -118,6 +125,7 @@ dotnet publish <Project>/<Project>.csproj -c Release -o Deck/<Project>
 5. 在 README.md 的「工具列表」添加条目
 6. 更新本文件的「项目结构」章节
 7. 每个工具自包含，不跨项目引用
+8. **图标**：从 `icons/` 目录随机选一个未被其他工具使用的 `stamp*.png`，复制为 `app.png` 并添加到 `.csproj` 的 `<EmbeddedResource>`。不能自己画图标，不能复用已被使用的 stamp
 
 ## Git 提交规范
 

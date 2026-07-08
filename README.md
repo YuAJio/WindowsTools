@@ -11,12 +11,14 @@ WindowsTools/
 ├── ThumbPin/       # 窗口置顶工具（源码）
 ├── MoodyBlues/     # 操作录制与重播（源码）
 ├── Yoink/          # 媒体下载器（源码）
+├── ClaudeMaster/   # Claude Code 环境配置器（源码）
 ├── Deck/           # 🃏 卡组 — 成品工具，双击即用
 │   ├── Klick/      # Klick.exe
 │   ├── DailyVoice/ # DailyVoice.exe
 │   ├── ThumbPin/   # ThumbPin.exe
 │   ├── MoodyBlues/ # MoodyBlues.exe
-│   └── Yoink/      # Yoink.exe
+│   ├── Yoink/      # Yoink.exe
+│   └── ClaudeMaster/ # ClaudeMaster.exe
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -95,6 +97,19 @@ WindowsTools/
 | 🔍 **自动定位** | 程序目录 → tools/ → C:\Software\tydlp\ → PATH 四级查找 |
 
 **技术栈**：.NET 8.0 + WinForms + yt-dlp + ffmpeg
+
+### [ClaudeMaster](ClaudeMaster/) — Claude Code 环境配置器
+
+一键安装 Claude Code CLI 并配置 API 地址和 Token。
+
+| 功能 | 说明 |
+|------|------|
+| 🔍 **环境检测** | 自动检测 Node.js 和 Claude Code 安装状态 |
+| 📦 **一键安装** | 通过 npm 安装/更新 Claude Code CLI，实时日志输出 |
+| ⚙ **API 配置** | 图形化配置 Base URL 和 API Key，写入用户环境变量 |
+| 📌 **系统托盘** | 关闭窗口最小化到托盘，随时唤出 |
+
+**技术栈**：.NET 8.0 + WinForms
 
 ---
 

@@ -48,6 +48,7 @@ partial class MainForm
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
+        this.Icon = IconHelper.LoadFromResource("Yoink.app.png");
 
         // ── URL 输入 ──
         var gbUrl = new GroupBox
