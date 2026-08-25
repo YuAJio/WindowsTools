@@ -30,6 +30,7 @@ internal class PlaybackEngine
 
             var sw = Stopwatch.StartNew();
             var lastOffset = 0L;
+            var trackCursor = recording.TrackCursor; // 录制标记决定是否追坐标 (⁎⁍̴̛ᴗ⁍̴̛⁎)
 
             for (int i = 0; i < events.Count; i++)
             {
@@ -49,7 +50,7 @@ internal class PlaybackEngine
                 }
 
                 lastOffset = evt.OffsetMs;
-                SendEvent(evt);
+                SendEvent(evt, trackCursor);
             }
         }
         catch (OperationCanceledException) { /* 用户手动停止 */ }
@@ -63,15 +64,18 @@ internal class PlaybackEngine
     /// <summary>
     /// 发送一个输入事件
     /// </summary>
-    private static void SendEvent(InputEvent evt)
+    private static void SendEvent(InputEvent evt, bool trackCursor)
     {
-        // 鼠标事件：先移动到绝对坐标再点击
+        // 鼠标事件：仅在追踪模式下移动光标 (⁎⁍̴̛ᴗ⁍̴̛⁎)
         if (evt.VkCode is NativeMethods.VK_LBUTTON or NativeMethods.VK_RBUTTON
             or NativeMethods.VK_MBUTTON or NativeMethods.VK_XBUTTON1 or NativeMethods.VK_XBUTTON2)
         {
-            // 先移动光标
-            NativeMethods.SetCursorPos(evt.MouseX, evt.MouseY);
-            Thread.Sleep(5); // 小延迟让系统注册位置变化
+            // 只有 trackCursor=true 才移动光标
+            if (trackCursor)
+            {
+                NativeMethods.SetCursorPos(evt.MouseX, evt.MouseY);
+                Thread.Sleep(5); // 小延迟让系统注册位置变化
+            }
 
             bool isDown = evt.Type == "MouseDown";
             uint downFlag = evt.VkCode switch
@@ -108,7 +112,7 @@ internal class PlaybackEngine
         }
         else
         {
-            // 键盘事件
+            // 键盘事件 — 优先用扫描码（游戏兼容）(⁎⁍̴̛ᴗ⁍̴̛⁎)
             var input = new NativeMethods.INPUT
             {
                 type = NativeMethods.INPUT_KEYBOARD,
@@ -116,11 +120,25 @@ internal class PlaybackEngine
                 {
                     ki = new NativeMethods.KEYBDINPUT
                     {
-                        wVk = (ushort)evt.VkCode,
-                        dwFlags = evt.Type == "KeyUp" ? NativeMethods.KEYEVENTF_KEYUP : 0u
+                        wVk = 0,
+                        wScan = (ushort)evt.ScanCode,
+                        dwFlags = NativeMethods.KEYEVENTF_SCANCODE,
+                        time = 0,
+                        dwExtraInfo = IntPtr.Zero
                     }
                 }
             };
+
+            if (evt.ScanCode == 0)
+            {
+                // 旧录制：回退到虚拟键码模式
+                input.u.ki.wVk = (ushort)evt.VkCode;
+                input.u.ki.wScan = 0;
+                input.u.ki.dwFlags = 0;
+            }
+            if (evt.Type == "KeyUp")
+                input.u.ki.dwFlags |= NativeMethods.KEYEVENTF_KEYUP;
+
             NativeMethods.SendInput(1, [input], NativeMethods.INPUT_SIZE);
         }
     }

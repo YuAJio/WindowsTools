@@ -65,7 +65,7 @@ public partial class MainForm : Form
     private void StartRecording()
     {
         if (_recordEngine.IsRecording || _playbackEngine.IsPlaying) return;
-        _recordEngine.Start();
+        _recordEngine.Start(chkTrackCursor.Checked);
     }
 
     private void StopRecording()
@@ -112,7 +112,8 @@ public partial class MainForm : Form
         {
             var count = rec.Events.Count;
             var duration = count > 0 ? rec.Events[^1].OffsetMs / 1000.0 : 0;
-            lbRecords.Items.Add($"{rec.Id} - {count} 事件, {duration:F1}s");
+            var cursorTag = rec.TrackCursor ? "📍" : "";
+            lbRecords.Items.Add($"{rec.Id} - {count} 事件, {duration:F1}s {cursorTag}");
         }
         lblRecordCount.Text = $"{lbRecords.Items.Count} 条记录";
     }

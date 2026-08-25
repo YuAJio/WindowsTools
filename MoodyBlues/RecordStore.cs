@@ -10,7 +10,8 @@ internal record InputEvent(
     string Type,        // "KeyDown" | "KeyUp" | "MouseDown" | "MouseUp"
     int VkCode,         // 虚拟键码（键盘 OR 鼠标按键）
     int MouseX,         // 鼠标事件时的屏幕绝对坐标
-    int MouseY
+    int MouseY,
+    int ScanCode = 0    // 硬件扫描码（键盘事件，默认 0 兼容旧录制）(⁎⁍̴̛ᴗ⁍̴̛⁎)
 );
 
 /// <summary>
@@ -19,7 +20,8 @@ internal record InputEvent(
 internal record Recording(
     string Id,          // 文件名（ISO 时间戳，不含非法字符）
     DateTime CreatedAt,
-    List<InputEvent> Events
+    List<InputEvent> Events,
+    bool TrackCursor = true // 播放时是否追踪鼠标坐标（默认 true 兼容旧录制）(⁎⁍̴̛ᴗ⁍̴̛⁎)
 );
 
 /// <summary>

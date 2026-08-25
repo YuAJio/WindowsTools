@@ -15,15 +15,18 @@ internal class RecordEngine : IDisposable
     private NativeMethods.LowLevelKeyboardProc? _kbdProc;
     private NativeMethods.LowLevelMouseProc? _mouseProc;
     private bool _recording;
+    private bool _trackCursor = true;
 
     public event Action? OnStarted;
     public event Action? OnStopped;
 
     public bool IsRecording => _recording;
 
-    public void Start()
+    public void Start(bool trackCursor = true)
     {
         if (_recording) return;
+
+        _trackCursor = trackCursor;
 
         _events.Clear();
         _stopwatch.Restart();
@@ -43,7 +46,7 @@ internal class RecordEngine : IDisposable
 
     public Recording Stop()
     {
-        if (!_recording) return new Recording("", DateTime.MinValue, []);
+        if (!_recording) return new Recording("", DateTime.MinValue, [], false);
 
         _recording = false;
         if (_kbdHook != IntPtr.Zero) { NativeMethods.UnhookWindowsHookEx(_kbdHook); _kbdHook = IntPtr.Zero; }
@@ -52,7 +55,7 @@ internal class RecordEngine : IDisposable
         _mouseProc = null;
 
         var id = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-        var recording = new Recording(id, DateTime.Now, [.. _events]);
+        var recording = new Recording(id, DateTime.Now, [.. _events], _trackCursor);
         RecordStore.Save(recording);
         OnStopped?.Invoke();
         return recording;
@@ -77,7 +80,7 @@ internal class RecordEngine : IDisposable
                     _events.Add(new InputEvent(
                         _stopwatch.ElapsedMilliseconds,
                         (msg == NativeMethods.WM_KEYDOWN || msg == NativeMethods.WM_SYSKEYDOWN) ? "KeyDown" : "KeyUp",
-                        vk, pt.x, pt.y));
+                        vk, pt.x, pt.y, (int)kb.scanCode));
                 }
             }
         }

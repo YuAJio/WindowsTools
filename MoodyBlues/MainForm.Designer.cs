@@ -8,6 +8,8 @@ partial class MainForm
     private Button btnDelete;
     private Button btnPlay;
     private Button btnStop;
+    private Button btnOpenEditor;
+    private CheckBox chkTrackCursor;
     private Label lblStatus;
     private Label lblHotkeyHint;
     private Label lblRecordCount;
@@ -31,7 +33,7 @@ partial class MainForm
     {
         this.Text = "MoodyBlues — 操作录制与重播";
         this.Icon = IconHelper.LoadFromResource("MoodyBlues.app.png");
-        this.Size = new Size(420, 380);
+        this.Size = new Size(420, 450);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
@@ -46,11 +48,21 @@ partial class MainForm
             TextAlign = ContentAlignment.MiddleCenter
         };
 
+        // ── 录制选项 ──
+        chkTrackCursor = new CheckBox
+        {
+            Text = "📍 录制时追踪鼠标坐标（播放时还原光标位置，游戏内建议关闭）",
+            Location = new Point(12, 40),
+            Size = new Size(380, 22),
+            Checked = true,
+            Font = new Font("Segoe UI", 8)
+        };
+
         // ── 状态 ──
         lblStatus = new Label
         {
             Text = "⏸ 等待操作...",
-            Location = new Point(12, 40),
+            Location = new Point(12, 66),
             Size = new Size(380, 22),
             Font = new Font("Segoe UI", 11, FontStyle.Bold),
             ForeColor = Color.DimGray,
@@ -61,19 +73,19 @@ partial class MainForm
         var gbList = new GroupBox
         {
             Text = "📼 录制记录",
-            Location = new Point(12, 70),
-            Size = new Size(380, 230)
+            Location = new Point(12, 96),
+            Size = new Size(380, 240)
         };
         lbRecords = new ListBox
         {
             Location = new Point(14, 22),
-            Size = new Size(350, 168),
+            Size = new Size(350, 155),
             IntegralHeight = false
         };
         lblRecordCount = new Label
         {
             Text = "0 条记录",
-            Location = new Point(14, 198),
+            Location = new Point(14, 184),
             Size = new Size(100, 20),
             ForeColor = Color.Gray
         };
@@ -82,8 +94,8 @@ partial class MainForm
         btnPlay = new Button
         {
             Text = "▶ 播放选中",
-            Location = new Point(130, 230),
-            Size = new Size(110, 30),
+            Location = new Point(130, 208),
+            Size = new Size(110, 28),
             Enabled = false
         };
         btnPlay.Click += (s, e) => PlaySelected();
@@ -91,8 +103,8 @@ partial class MainForm
         btnStop = new Button
         {
             Text = "⏹ 停止播放",
-            Location = new Point(248, 230),
-            Size = new Size(110, 30),
+            Location = new Point(248, 208),
+            Size = new Size(110, 28),
             Enabled = false
         };
         btnStop.Click += (s, e) =>
@@ -104,8 +116,8 @@ partial class MainForm
         btnDelete = new Button
         {
             Text = "🗑 删除选中",
-            Location = new Point(12, 230),
-            Size = new Size(110, 30),
+            Location = new Point(12, 208),
+            Size = new Size(110, 28),
             Enabled = false
         };
         btnDelete.Click += (s, e) => DeleteSelected();
@@ -120,6 +132,30 @@ partial class MainForm
         {
             btnPlay.Enabled = lbRecords.SelectedItem != null;
             btnDelete.Enabled = lbRecords.SelectedItem != null;
+        };
+
+        // ── 预设编辑器入口（独立区域） ──
+        var lblDivider = new Label
+        {
+            Text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            Location = new Point(12, 344),
+            Size = new Size(380, 18),
+            ForeColor = Color.LightGray,
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+
+        btnOpenEditor = new Button
+        {
+            Text = "✏ 打开预设编辑器 — 手动编排按键与鼠标序列",
+            Location = new Point(12, 368),
+            Size = new Size(380, 34),
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
+            Enabled = true
+        };
+        btnOpenEditor.Click += (s, e) =>
+        {
+            using var editor = new PresetEditorForm();
+            editor.ShowDialog(this);
         };
 
         // ── 托盘 ──
@@ -139,8 +175,11 @@ partial class MainForm
 
         // ── 表单 ──
         this.Controls.Add(lblHotkeyHint);
+        this.Controls.Add(chkTrackCursor);
         this.Controls.Add(lblStatus);
         this.Controls.Add(gbList);
+        this.Controls.Add(lblDivider);
+        this.Controls.Add(btnOpenEditor);
         this.Resize += OnFormResize;
         this.FormClosing += OnFormClosing;
     }

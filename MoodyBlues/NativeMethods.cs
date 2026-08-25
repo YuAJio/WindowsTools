@@ -9,6 +9,7 @@ internal static class NativeMethods
     public const int INPUT_MOUSE = 0;
     public const int INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_KEYUP = 0x0002;
+    public const uint KEYEVENTF_SCANCODE = 0x0008;
     public const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
     public const uint MOUSEEVENTF_LEFTUP = 0x0004;
     public const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
@@ -163,6 +164,12 @@ internal static class NativeMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetCursorPos(int x, int y);
+
+    // MapVirtualKey: VK 码 ↔ 扫描码 转换 (⁎⁍̴̛ᴗ⁍̴̛⁎)
+    public const uint MAPVK_VK_TO_VSC = 0;
+
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
     [DllImport("user32.dll")]
     public static extern int GetSystemMetrics(int nIndex);
