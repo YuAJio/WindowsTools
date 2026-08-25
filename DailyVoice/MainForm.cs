@@ -34,6 +34,7 @@ public partial class MainForm : Form
         _scheduler = new Scheduler(_voiceDir, _audioPlayer, () => _config);
         _scheduler.OnPlayStarted += () => UpdateStatus("▶ 正在播放...", Color.Crimson);
         _scheduler.OnPlayFinished += () => UpdateStatus("⏸ 等待播放时间到达...", Color.DimGray);
+        _scheduler.OnVideoStarted += OnPlaylistVideoStarted;
 
         // 初始加载文件列表
         RefreshFileList();
@@ -78,12 +79,15 @@ public partial class MainForm : Form
             TimeSpan.TryParse(_config.VideoPlayTime, out var videoTs))
             dtpVideoTime.Value = DateTime.Today.Add(videoTs);
 
-        // 视频文件
-        if (!string.IsNullOrEmpty(_config.VideoFile) && File.Exists(_config.VideoFile))
+        // 旧版单选视频 → 迁移到排班（迁移后清空旧字段，避免重复迁移）
+        if (_config.VideoPlaylist.Count == 0 &&
+            !string.IsNullOrEmpty(_config.VideoFile) && File.Exists(_config.VideoFile))
         {
-            lblVideoFile.Text = Path.GetFileName(_config.VideoFile);
-            lblVideoFile.ForeColor = SystemColors.ControlText;
+            _config.VideoPlaylist.Add(_config.VideoFile);
+            _config.VideoFile = null;
         }
+
+        RefreshPlaylistUi();
     }
 
     private void OnSave(object? sender, EventArgs e)
@@ -92,8 +96,8 @@ public partial class MainForm : Form
         {
             PlayTime = dtpTime.Value.ToString("HH:mm"),
             Volume = tbVolume.Value,
-            VideoFile = _config.VideoFile,
-            VideoPlayTime = dtpVideoTime.Value.ToString("HH:mm")
+            VideoPlayTime = dtpVideoTime.Value.ToString("HH:mm"),
+            VideoPlaylist = _config.VideoPlaylist // 排班列表实时维护在 _config 上
         };
         ConfigManager.Save(_config);
         _audioPlayer.Volume = _config.Volume / 100f;
@@ -119,47 +123,131 @@ public partial class MainForm : Form
         Process.Start("explorer.exe", _voiceDir);
     }
 
-    private void OnBrowseVideo(object? sender, EventArgs e)
+    private void OnAddVideo(object? sender, EventArgs e)
     {
         using var dlg = new OpenFileDialog
         {
-            Title = "选择视频文件",
+            Title = "选择视频文件（追加到排班）",
             Filter = "视频文件|*.mp4;*.mkv;*.avi;*.webm;*.mov|所有文件|*.*",
             InitialDirectory = Directory.Exists(_videoDir) ? _videoDir : BaseDir
         };
         if (dlg.ShowDialog() == DialogResult.OK)
         {
-            _config.VideoFile = dlg.FileName;
-            lblVideoFile.Text = Path.GetFileName(dlg.FileName);
-            lblVideoFile.ForeColor = SystemColors.ControlText;
+            // 单选：一次加一个，重复添加实现同一视频多次排班
+            _config.VideoPlaylist.Add(dlg.FileName);
+            RefreshPlaylistUi();
         }
     }
 
-    private void OnClearVideo(object? sender, EventArgs e)
+    private void OnRemoveVideo(object? sender, EventArgs e)
     {
-        _config.VideoFile = null;
-        lblVideoFile.Text = "未选择视频";
-        lblVideoFile.ForeColor = Color.Gray;
+        var idx = lbVideoPlaylist.SelectedIndex;
+        if (idx < 0 || idx >= _config.VideoPlaylist.Count) return;
+
+        _config.VideoPlaylist.RemoveAt(idx);
+        RefreshPlaylistUi();
+    }
+
+    private void OnMoveUp(object? sender, EventArgs e)
+    {
+        var idx = lbVideoPlaylist.SelectedIndex;
+        if (idx <= 0 || idx >= _config.VideoPlaylist.Count) return;
+
+        (_config.VideoPlaylist[idx - 1], _config.VideoPlaylist[idx]) =
+            (_config.VideoPlaylist[idx], _config.VideoPlaylist[idx - 1]);
+        RefreshPlaylistUi(selectIndex: idx - 1);
+    }
+
+    private void OnMoveDown(object? sender, EventArgs e)
+    {
+        var idx = lbVideoPlaylist.SelectedIndex;
+        if (idx < 0 || idx >= _config.VideoPlaylist.Count - 1) return;
+
+        (_config.VideoPlaylist[idx + 1], _config.VideoPlaylist[idx]) =
+            (_config.VideoPlaylist[idx], _config.VideoPlaylist[idx + 1]);
+        RefreshPlaylistUi(selectIndex: idx + 1);
+    }
+
+    /// <summary>
+    /// 排班列表 → ListBox（显示文件名，_config 里存完整路径）
+    /// </summary>
+    private void RefreshPlaylistUi(int? selectIndex = null)
+    {
+        lbVideoPlaylist.Items.Clear();
+        foreach (var path in _config.VideoPlaylist)
+            lbVideoPlaylist.Items.Add(Path.GetFileName(path));
+
+        lblPlaylistCount.Text = $"{_config.VideoPlaylist.Count} 个视频";
+
+        // 上移/下移后恢复选中跟随
+        if (selectIndex.HasValue && selectIndex.Value >= 0 && selectIndex.Value < lbVideoPlaylist.Items.Count)
+            lbVideoPlaylist.SelectedIndex = selectIndex.Value;
     }
 
     private void OnPlayVideo(object? sender, EventArgs e)
     {
-        if (string.IsNullOrEmpty(_config.VideoFile) || !File.Exists(_config.VideoFile))
+        // 预检：至少有一个可播放文件；失效项由播放器内部跳过（保持索引与列表对齐）
+        if (!_config.VideoPlaylist.Any(File.Exists))
         {
-            MessageBox.Show("请先选择一个视频文件喵~", "DailyVoice",
+            MessageBox.Show("排班里没有可播放的视频文件喵~", "DailyVoice",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
 
         try
         {
-            using var videoForm = new VideoPlayerForm(_config.VideoFile);
-            videoForm.ShowDialog();
+            // 播放排班快照：改排班只影响下一轮，当前轮绝不乱序
+            using var videoForm = new VideoPlayerForm(_config.VideoPlaylist.ToList());
+            videoForm.OnVideoStarted += OnPlaylistVideoStarted;
+            videoForm.ShowDialog(); // 模态阻塞：播放期间 UI 锁定，排班不可被改动
+            videoForm.OnVideoStarted -= OnPlaylistVideoStarted;
+
+            // 播放结束，取消高亮
+            lbVideoPlaylist.SelectedIndex = -1;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"DailyVoice 立即播放视频失败: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 排班播放进度 → 高亮当前项（事件从后台线程触发，切回 UI 线程）
+    /// </summary>
+    private void OnPlaylistVideoStarted(int index)
+    {
+        BeginInvoke(() =>
+        {
+            if (index < 0 || index >= lbVideoPlaylist.Items.Count) return;
+
+            lbVideoPlaylist.SelectedIndex = index;
+            // 让当前项保持在可见区域（顶部往下 2 行为准）
+            lbVideoPlaylist.TopIndex = Math.Max(0, index - 2);
+        });
+    }
+
+    /// <summary>
+    /// OwnerDraw：模态播放期间 ListBox 被禁用，系统默认不绘制高亮，
+    /// 这里按 SelectedIndex 强制绘制，当前项 = 蓝底白字 + "▶" 前缀
+    /// </summary>
+    private void OnPlaylistDrawItem(object? sender, DrawItemEventArgs e)
+    {
+        if (e.Index < 0 || e.Index >= lbVideoPlaylist.Items.Count) return;
+
+        var isCurrent = e.Index == lbVideoPlaylist.SelectedIndex;
+        using var bg = new SolidBrush(isCurrent ? Color.SteelBlue : SystemColors.Window);
+        e.Graphics.FillRectangle(bg, e.Bounds);
+
+        var text = lbVideoPlaylist.Items[e.Index]?.ToString() ?? "";
+        if (isCurrent) text = "▶ " + text;
+
+        using var fg = new SolidBrush(isCurrent ? Color.White : SystemColors.ControlText);
+        using var fmt = new StringFormat
+        {
+            Trimming = StringTrimming.EllipsisCharacter,
+            LineAlignment = StringAlignment.Center
+        };
+        e.Graphics.DrawString(text, e.Font ?? Font, fg, e.Bounds, fmt);
     }
 
     private void RefreshFileList()

@@ -23,6 +23,8 @@ internal class Scheduler : IDisposable
     // 事件：通知 UI 状态变化
     public event Action? OnPlayStarted;
     public event Action? OnPlayFinished;
+    /// <summary>视频排班播放进度（索引），供 UI 高亮当前项</summary>
+    public event Action<int>? OnVideoStarted;
 
     public Scheduler(string voiceDir, AudioPlayer player, Func<Config> configLoader)
     {
@@ -238,12 +240,14 @@ internal class Scheduler : IDisposable
 
     private void PlayVideoIfConfigured(Config cfg)
     {
-        if (string.IsNullOrEmpty(cfg.VideoFile) || !File.Exists(cfg.VideoFile))
+        // 预检：至少有一个可播放文件；失效项由播放器内部跳过（保持索引与列表对齐）
+        if (!cfg.VideoPlaylist.Any(File.Exists))
             return; // 静默跳过
 
         try
         {
-            using var videoForm = new VideoPlayerForm(cfg.VideoFile);
+            using var videoForm = new VideoPlayerForm(cfg.VideoPlaylist.ToList());
+            videoForm.OnVideoStarted += index => OnVideoStarted?.Invoke(index);
             videoForm.ShowDialog(); // 阻塞 UI 线程，播放期间暂停定时器触发
         }
         catch (Exception ex)

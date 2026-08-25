@@ -5,6 +5,7 @@ namespace DailyVoice;
 /// <summary>
 /// 全屏视频播放 (⁎⁍̴̛ᴗ⁍̴̛⁎)
 ///
+/// 排班模式：按顺序播放视频列表，播完全部后关闭。同一视频可重复排班实现"循环"。
 /// 策略：优先用命令行播放器（全屏 + 播完退出），均不可用时降级系统播放器。
 ///   VLC:  vlc --fullscreen --play-and-exit --no-video-title-show <file>
 ///   ffplay: ffplay -fs -autoexit -noborder <file>
@@ -12,11 +13,17 @@ namespace DailyVoice;
 /// </summary>
 internal sealed class VideoPlayerForm : Form
 {
-    private readonly string _videoPath;
+    private readonly IReadOnlyList<string> _videoPaths;
 
-    public VideoPlayerForm(string videoPath)
+    /// <summary>
+    /// 每个排班视频即将开始播放时触发（参数 = 排班索引）。
+    /// 从后台线程触发，订阅方需自行切换回 UI 线程。
+    /// </summary>
+    public event Action<int>? OnVideoStarted;
+
+    public VideoPlayerForm(IReadOnlyList<string> videoPaths)
     {
-        _videoPath = videoPath ?? throw new ArgumentNullException(nameof(videoPath));
+        _videoPaths = videoPaths ?? throw new ArgumentNullException(nameof(videoPaths));
 
         // 隐藏自身，不显示任何窗口
         this.Text = "";
@@ -34,57 +41,38 @@ internal sealed class VideoPlayerForm : Form
 
     private void PlayAndWait()
     {
-        Process? proc = null;
-
         try
         {
-            // 优先 VLC — 最可靠的命令行全屏方案
-            var vlcPath = FindVlc();
-            if (vlcPath != null)
+            for (var i = 0; i < _videoPaths.Count; i++)
             {
-                Debug.WriteLine($"[DailyVoice] VLC: {vlcPath}");
-                proc = Process.Start(new ProcessStartInfo
-                {
-                    FileName = vlcPath,
-                    Arguments = $"--fullscreen --play-and-exit --no-video-title-show --no-qt-fs-controller --video-on-top \"{_videoPath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-            }
+                var path = _videoPaths[i];
 
-            // 其次 ffplay
-            if (proc == null)
-            {
-                var ffplayPath = FindInPath("ffplay");
-                if (ffplayPath != null)
+                // 文件被删/移动时跳过，保持索引与排班列表一致
+                if (!File.Exists(path))
                 {
-                    Debug.WriteLine($"[DailyVoice] ffplay: {ffplayPath}");
-                    proc = Process.Start(new ProcessStartInfo
-                    {
-                        FileName = ffplayPath,
-                        Arguments = $"-fs -autoexit -noborder \"{_videoPath}\"",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    });
+                    Debug.WriteLine($"[DailyVoice] 排班第 {i + 1} 项文件不存在，跳过: {path}");
+                    continue;
                 }
-            }
 
-            // 降级：系统默认播放器
-            if (proc == null)
-            {
-                Debug.WriteLine("[DailyVoice] 降级系统播放器");
-                proc = Process.Start(new ProcessStartInfo
+                Debug.WriteLine($"[DailyVoice] 排班视频 {i + 1}/{_videoPaths.Count}: {Path.GetFileName(path)}");
+
+                // 通知 UI 高亮当前项（后台线程）
+                OnVideoStarted?.Invoke(i);
+
+                var proc = LaunchPlayer(path);
+
+                if (proc != null)
                 {
-                    FileName = _videoPath,
-                    UseShellExecute = true
-                });
-            }
-
-            if (proc != null)
-            {
-                Debug.WriteLine($"[DailyVoice] 播放器已启动 (PID={proc.Id})，等待退出...");
-                proc.WaitForExit();
-                Debug.WriteLine($"[DailyVoice] 播放器已退出 (exit={proc.ExitCode})");
+                    Debug.WriteLine($"[DailyVoice] 播放器已启动 (PID={proc.Id})，等待退出...");
+                    proc.WaitForExit();
+                    Debug.WriteLine($"[DailyVoice] 播放器已退出 (exit={proc.ExitCode})");
+                }
+                else
+                {
+                    // 降级到系统播放器时拿不到 Process，跳出排班
+                    Debug.WriteLine("[DailyVoice] 系统播放器无法追踪退出，跳出排班");
+                    break;
+                }
             }
         }
         catch (Exception ex)
@@ -97,6 +85,48 @@ internal sealed class VideoPlayerForm : Form
         {
             if (!this.IsDisposed)
                 this.Close();
+        });
+    }
+
+    /// <summary>
+    /// 启动单个播放器进程（按优先级：VLC → ffplay → 系统默认）
+    /// </summary>
+    private static Process? LaunchPlayer(string videoPath)
+    {
+        // 优先 VLC — 最可靠的命令行全屏方案
+        var vlcPath = FindVlc();
+        if (vlcPath != null)
+        {
+            Debug.WriteLine($"[DailyVoice] VLC: {vlcPath}");
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = vlcPath,
+                Arguments = $"--fullscreen --play-and-exit --no-video-title-show --no-qt-fs-controller --video-on-top \"{videoPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+        }
+
+        // 其次 ffplay
+        var ffplayPath = FindInPath("ffplay");
+        if (ffplayPath != null)
+        {
+            Debug.WriteLine($"[DailyVoice] ffplay: {ffplayPath}");
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = ffplayPath,
+                Arguments = $"-fs -autoexit -noborder \"{videoPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+        }
+
+        // 降级：系统默认播放器（拿不到进程，跳出排班）
+        Debug.WriteLine("[DailyVoice] 降级系统播放器");
+        return Process.Start(new ProcessStartInfo
+        {
+            FileName = videoPath,
+            UseShellExecute = true
         });
     }
 

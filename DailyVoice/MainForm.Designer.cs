@@ -19,11 +19,14 @@ partial class MainForm
     private Button btnPreviewFile;
     private Label lblFileCount;
 
-    // 视频
+    // 视频排班
     private DateTimePicker dtpVideoTime;
-    private Label lblVideoFile;
-    private Button btnBrowseVideo;
-    private Button btnClearVideo;
+    private ListBox lbVideoPlaylist;
+    private Label lblPlaylistCount;
+    private Button btnAddVideo;
+    private Button btnRemoveVideo;
+    private Button btnMoveUp;
+    private Button btnMoveDown;
     private Button btnPlayVideo;
 
     // 控制按钮
@@ -54,7 +57,7 @@ partial class MainForm
     {
         this.Text = "DailyVoice — 每日语音播放";
         this.Icon = IconHelper.LoadFromResource("DailyVoice.app.png");
-        this.Size = new Size(420, 550);
+        this.Size = new Size(420, 660);
         this.FormBorderStyle = FormBorderStyle.FixedSingle;
         this.MaximizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
@@ -166,12 +169,12 @@ partial class MainForm
         gbFiles.Controls.Add(btnRefreshFiles);
         gbFiles.Controls.Add(btnOpenFolder);
 
-        // ── 视频播放 ──
+        // ── 视频排班 ──
         var gbVideo = new GroupBox
         {
-            Text = "🎬 视频播放（独立定时）",
+            Text = "🎬 视频排班（独立定时，按顺序播放）",
             Location = new Point(12, 316),
-            Size = new Size(380, 80)
+            Size = new Size(380, 240)
         };
         var lblVideoTime = new Label
         {
@@ -187,47 +190,76 @@ partial class MainForm
             Size = new Size(90, 23),
             Value = DateTime.Today.AddHours(14) // 默认 14:00
         };
-        lblVideoFile = new Label
-        {
-            Text = "未选择视频",
-            Location = new Point(14, 48),
-            Size = new Size(100, 20),
-            AutoEllipsis = true,
-            ForeColor = Color.Gray
-        };
         btnPlayVideo = new Button
         {
-            Text = "▶ 播放",
-            Location = new Point(118, 45),
-            Size = new Size(65, 25)
+            Text = "▶ 按排班播放",
+            Location = new Point(258, 21),
+            Size = new Size(108, 25)
         };
         btnPlayVideo.Click += OnPlayVideo;
-        btnBrowseVideo = new Button
+
+        lbVideoPlaylist = new ListBox
         {
-            Text = "📁 选择",
-            Location = new Point(188, 45),
-            Size = new Size(65, 25)
+            Location = new Point(14, 55),
+            Size = new Size(250, 150),
+            IntegralHeight = false,
+            SelectionMode = SelectionMode.One,
+            DrawMode = DrawMode.OwnerDrawFixed,
+            ItemHeight = 20
         };
-        btnBrowseVideo.Click += OnBrowseVideo;
-        btnClearVideo = new Button
+        lbVideoPlaylist.DrawItem += OnPlaylistDrawItem;
+        // OwnerDraw 下选中变化要强制全列表重绘，否则旧高亮残留堆叠成"多选"假象
+        lbVideoPlaylist.SelectedIndexChanged += (s, e) => lbVideoPlaylist.Invalidate();
+        lblPlaylistCount = new Label
         {
-            Text = "✕ 清除",
-            Location = new Point(258, 45),
-            Size = new Size(55, 25)
+            Text = "0 个视频",
+            Location = new Point(14, 212),
+            Size = new Size(120, 20),
+            ForeColor = Color.Gray
         };
-        btnClearVideo.Click += OnClearVideo;
+        btnAddVideo = new Button
+        {
+            Text = "➕ 添加",
+            Location = new Point(272, 55),
+            Size = new Size(94, 28)
+        };
+        btnAddVideo.Click += OnAddVideo;
+        btnRemoveVideo = new Button
+        {
+            Text = "➖ 删除",
+            Location = new Point(272, 90),
+            Size = new Size(94, 28)
+        };
+        btnRemoveVideo.Click += OnRemoveVideo;
+        btnMoveUp = new Button
+        {
+            Text = "⬆ 上移",
+            Location = new Point(272, 125),
+            Size = new Size(94, 28)
+        };
+        btnMoveUp.Click += OnMoveUp;
+        btnMoveDown = new Button
+        {
+            Text = "⬇ 下移",
+            Location = new Point(272, 160),
+            Size = new Size(94, 28)
+        };
+        btnMoveDown.Click += OnMoveDown;
         gbVideo.Controls.Add(lblVideoTime);
         gbVideo.Controls.Add(dtpVideoTime);
-        gbVideo.Controls.Add(lblVideoFile);
         gbVideo.Controls.Add(btnPlayVideo);
-        gbVideo.Controls.Add(btnBrowseVideo);
-        gbVideo.Controls.Add(btnClearVideo);
+        gbVideo.Controls.Add(lbVideoPlaylist);
+        gbVideo.Controls.Add(lblPlaylistCount);
+        gbVideo.Controls.Add(btnAddVideo);
+        gbVideo.Controls.Add(btnRemoveVideo);
+        gbVideo.Controls.Add(btnMoveUp);
+        gbVideo.Controls.Add(btnMoveDown);
 
         // ── 控制 ──
         var gbControl = new GroupBox
         {
             Text = "🎮 控制",
-            Location = new Point(12, 404),
+            Location = new Point(12, 564),
             Size = new Size(380, 52)
         };
         btnPlayNow = new Button
@@ -251,7 +283,7 @@ partial class MainForm
         lblStatus = new Label
         {
             Text = "⏸ 等待播放时间到达...",
-            Location = new Point(12, 466),
+            Location = new Point(12, 626),
             Size = new Size(260, 20),
             ForeColor = Color.DimGray
         };
@@ -260,7 +292,7 @@ partial class MainForm
         chkAutoStart = new CheckBox
         {
             Text = "开机自启",
-            Location = new Point(280, 466),
+            Location = new Point(280, 626),
             Size = new Size(110, 20),
             CheckAlign = ContentAlignment.MiddleRight
         };

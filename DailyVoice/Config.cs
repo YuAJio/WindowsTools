@@ -9,10 +9,15 @@ internal record Config
 {
     public string PlayTime { get; set; } = "13:55";
     public int Volume { get; set; } = 80;
-    /// <summary>视频文件全路径（null 表示未选择）</summary>
-    public string? VideoFile { get; set; }
     /// <summary>视频独立播放时间 HH:mm</summary>
     public string? VideoPlayTime { get; set; }
+    /// <summary>视频排班列表：按顺序播放，同一视频可重复排班（路径列表）</summary>
+    public List<string> VideoPlaylist { get; set; } = new();
+
+    /// <summary>
+    /// 旧版单选视频字段（仅用于迁移到排班，迁移后置 null）
+    /// </summary>
+    public string? VideoFile { get; set; }
 }
 
 internal static class ConfigManager
