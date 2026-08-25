@@ -12,13 +12,15 @@ WindowsTools/
 ├── MoodyBlues/     # 操作录制与重播（源码）
 ├── Yoink/          # 媒体下载器（源码）
 ├── ClaudeMaster/   # Claude Code 环境配置器（源码）
+├── QqPlaylist/     # QQ 音乐歌单抓取器（源码）
 ├── Deck/           # 🃏 卡组 — 成品工具，双击即用
 │   ├── Klick/      # Klick.exe
 │   ├── DailyVoice/ # DailyVoice.exe
 │   ├── ThumbPin/   # ThumbPin.exe
 │   ├── MoodyBlues/ # MoodyBlues.exe
 │   ├── Yoink/      # Yoink.exe
-│   └── ClaudeMaster/ # ClaudeMaster.exe
+│   ├── ClaudeMaster/ # ClaudeMaster.exe
+│   └── QqPlaylist/ # QqPlaylist.exe
 ├── README.md       # 本文件
 └── CLAUDE.md       # AI 导览文档
 ```
@@ -110,6 +112,22 @@ WindowsTools/
 | 📌 **系统托盘** | 关闭窗口最小化到托盘，随时唤出 |
 
 **技术栈**：.NET 8.0 + WinForms
+
+### [QqPlaylist](QqPlaylist/) — QQ 音乐歌单抓取器
+
+输入 QQ 音乐歌单 ID/URL，一键拉取所有歌曲为 Markdown，可选自动保存到本地。
+
+| 功能 | 说明 |
+|------|------|
+| 🔗 **智能识别** | 支持纯数字 ID 或完整 URL（自动提取 ID） |
+| 📋 **Markdown 输出** | 序号 / 歌名 / 歌手 / 专辑 / 时长 五列表格 |
+| 💾 **自动保存** | 勾选 checkbox 后解析即写入到指定路径 |
+| 📂 **手动浏览** | SaveFileDialog 自由选输出位置 |
+| 📋 **一键复制** | 整个 Markdown 直接丢进剪贴板 |
+| ⏎ **回车即抓** | 输入框回车直接触发抓取 |
+| 📋 **我的歌单** | 粘贴 Cookie 后一键拉取个人主页（我创建/我收藏的歌单），双击跳到抓取 |
+
+**技术栈**：.NET 8.0 + WinForms + HttpClient + System.Text.Json + DPAPI 加密
 
 ---
 

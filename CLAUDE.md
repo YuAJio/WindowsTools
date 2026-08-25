@@ -58,13 +58,26 @@ WindowsTools/
 │   ├── MainForm.cs            # 环境检测 + npm 安装 + API 配置逻辑
 │   ├── MainForm.Designer.cs   # UI 布局（手写）
 │   └── IconHelper.cs          # 嵌入式图标加载器
+├── QqPlaylist/                # QQ 音乐歌单抓取器
+│   ├── QqPlaylist.csproj      # net8.0-windows, WinExe + PublishSingleFile
+│   ├── Program.cs             # 入口 + 单实例 Mutex
+│   ├── MainForm.cs            # 抓取/显示/保存事件 + 「我的歌单」入口
+│   ├── MainForm.Designer.cs   # UI 布局（手写）
+│   ├── PlaylistFetcher.cs     # HttpClient + System.Text.Json 调 QQ 音乐 v8 歌单 API
+│   ├── ProfileFetcher.cs      # HttpClient + g_tk 算法 调 QQ 音乐用户主页 API
+│   ├── CookieStore.cs         # DPAPI 加密保存 Cookie 到 %AppData%\QqPlaylist\
+│   ├── PlaylistSelectorForm.cs     # 「我的歌单」子窗体逻辑
+│   ├── PlaylistSelectorForm.Designer.cs
+│   ├── IconHelper.cs          # 嵌入式图标加载器
+│   └── app.png                # 嵌入式图标（stamp）
 ├── Deck/                      # 🃏 卡组 — 成品工具发布目录
 │   ├── Klick/
 │   ├── DailyVoice/
 │   ├── ThumbPin/
 │   ├── MoodyBlues/
 │   ├── Yoink/
-│   └── ClaudeMaster/
+│   ├── ClaudeMaster/
+│   └── QqPlaylist/
 ├── README.md
 └── CLAUDE.md                  # 本文件
 ```

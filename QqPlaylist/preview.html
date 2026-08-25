@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>QqPlaylist v2 Preview — QQ 音乐歌单抓取器</title>
+<style>
+  /* ═════════════ Theme ═════════════ */
+  :root{
+    --bg:#1b1d22; --bg2:#22252b; --panel:#272a31; --panel2:#2e323a;
+    --line:#3a3f48; --line2:#444a55;
+    --text:#e6e9ef; --text2:#9ba3b4; --dim:#6e7585;
+    --accent:#5cc8ff; --accent2:#7c9eff; --good:#5dd39e; --bad:#ff7676; --warn:#ffb454;
+    --pink:#ff8db4; --yellow:#ffd166;
+    --mono:'Cascadia Code','Consolas','JetBrains Mono',ui-monospace,monospace;
+    --sans:'Segoe UI','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#0e0f12;color:var(--text);font-family:var(--sans);font-size:13px;overflow:hidden}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#3a3f48;border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:#4a515c}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* ═════════════ Window chrome ═════════════ */
+  .window{
+    width:100vw;height:100vh;display:flex;flex-direction:column;
+    background:var(--bg);border:1px solid var(--line);
+  }
+  .titlebar{
+    height:32px;display:flex;align-items:center;padding:0 12px;
+    background:linear-gradient(to bottom,#2b2e35,#1f2228);border-bottom:1px solid var(--line);
+    user-select:none;flex-shrink:0;
+  }
+  .titlebar .icon{font-size:14px;margin-right:8px}
+  .titlebar .title{font-weight:600;font-size:12.5px;color:var(--text);letter-spacing:.2px}
+  .titlebar .ver{margin-left:6px;color:var(--dim);font-size:11px;font-family:var(--mono)}
+  .titlebar .spacer{flex:1}
+  .titlebar .winbtns{display:flex;gap:4px}
+  .titlebar .winbtns span{
+    width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+    color:var(--dim);border-radius:4px;cursor:default;font-size:12px;font-family:var(--mono);
+  }
+  .titlebar .winbtns span:hover{background:#3a3f48;color:var(--text)}
+
+  /* ═════════════ Status bar (top) ═════════════ */
+  .topbar{
+    height:42px;display:flex;align-items:center;padding:0 14px;gap:14px;
+    background:var(--bg2);border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .topbar .led{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 6px var(--good)}
+  .topbar .text{font-size:12.5px;color:var(--text2)}
+  .topbar .text b{color:var(--text);font-weight:600}
+  .topbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .pill{
+    font-family:var(--mono);font-size:11px;padding:3px 10px;border-radius:10px;
+    background:var(--panel);color:var(--text2);border:1px solid var(--line);
+  }
+  .pill.good{color:var(--good);border-color:#2c4a3c;background:#1a2a23}
+  .pill.warn{color:var(--warn);border-color:#4a3a1d;background:#2a2218}
+
+  /* ═════════════ 3-pane layout ═════════════ */
+  .panes{flex:1;display:grid;grid-template-columns:240px 1fr 320px;min-height:0}
+  .pane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--bg)}
+  .pane:last-child{border-right:none}
+  .pane-head{
+    height:36px;display:flex;align-items:center;padding:0 12px;gap:8px;
+    background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;font-size:12px;
+    color:var(--text);font-weight:600;
+  }
+  .pane-head .ico{font-size:14px}
+  .pane-head .count{
+    margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text2);
+    background:var(--panel2);padding:2px 8px;border-radius:10px;
+  }
+  .pane-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 6px}
+
+  /* ═════════════ Left: playlist list ═════════════ */
+  .search{
+    margin:0 6px 8px;display:flex;align-items:center;gap:6px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;
+  }
+  .search input{
+    flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:12px;
+  }
+  .search input::placeholder{color:var(--dim)}
+  .search .si{color:var(--dim);font-size:12px}
+
+  .group-label{
+    font-size:11px;color:var(--dim);font-weight:600;letter-spacing:.5px;
+    padding:10px 10px 4px;display:flex;align-items:center;gap:6px;
+  }
+  .group-label::before{content:"";width:3px;height:10px;background:var(--accent);border-radius:1px}
+  .pl-item{
+    display:flex;flex-direction:column;gap:3px;padding:8px 10px;margin:1px 4px;
+    border-radius:6px;cursor:pointer;border:1px solid transparent;transition:background .12s;
+  }
+  .pl-item:hover{background:var(--panel)}
+  .pl-item.active{background:var(--panel2);border-color:var(--accent2)}
+  .pl-item .row1{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text)}
+  .pl-item .row1 .ic{font-size:11px}
+  .pl-item .row2{font-size:10.5px;color:var(--dim);font-family:var(--mono);display:flex;align-items:center;gap:8px}
+  .pl-item .row2 .badge{
+    background:var(--panel2);padding:1px 6px;border-radius:8px;color:var(--text2);
+    border:1px solid var(--line);
+  }
+
+  .load-my{
+    margin:8px 8px 0;padding:10px;background:var(--panel);border:1px dashed var(--line2);
+    border-radius:8px;
+  }
+  .load-my.collapsed{padding:6px 10px}
+  .load-my .head{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text2);font-size:12px}
+  .load-my .head .arr{transition:transform .15s;color:var(--dim)}
+  .load-my:not(.collapsed) .head .arr{transform:rotate(90deg)}
+  .load-my .body{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .load-my.hidden .body{display:none}
+  .input{
+    width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--line);
+    border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11.5px;outline:none;
+  }
+  .input:focus{border-color:var(--accent)}
+  textarea.input{resize:vertical;min-height:54px;font-size:10.5px}
+  .row-btns{display:flex;gap:6px;margin-top:4px}
+  .hint{font-size:10.5px;color:var(--dim);font-family:var(--mono);display:flex;align-items:center;gap:4px}
+  .hint.ok{color:var(--good)}
+
+  /* ═════════════ Center: input + output ═════════════ */
+  .center{display:flex;flex-direction:column;min-height:0}
+  .input-panel{padding:14px;border-bottom:1px solid var(--line);background:var(--bg2);flex-shrink:0}
+  .input-panel .row{display:flex;gap:8px;align-items:stretch}
+  .input-panel .field{flex:1;display:flex;flex-direction:column;gap:4px}
+  .input-panel label{font-size:11px;color:var(--text2);font-weight:600}
+  .input-panel .field input{
+    background:var(--bg);border:1px solid var(--line);padding:8px 10px;border-radius:6px;
+    color:var(--text);font-family:var(--mono);font-size:12.5px;outline:none;
+  }
+  .input-panel .field input:focus{border-color:var(--accent)}
+
+  .btn{
+    padding:8px 14px;border:1px solid var(--line);border-radius:6px;
+    background:var(--panel);color:var(--text);font-size:12px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:background .12s, border-color .12s;
+    font-family:inherit;white-space:nowrap;
+  }
+  .btn:hover{background:var(--panel2);border-color:var(--line2)}
+  .btn.primary{background:linear-gradient(to bottom,#4a8fd0,#3a7cbe);border-color:#3a7cbe;color:white;font-weight:600}
+  .btn.primary:hover{background:linear-gradient(to bottom,#5499da,#4487c9)}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--text2)}
+  .btn.ghost:hover{background:var(--panel);color:var(--text)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-row{display:flex;gap:6px;flex-wrap:wrap}
+
+  .save-bar{
+    display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line);font-size:11.5px;color:var(--text2);
+  }
+  .save-bar .chk{display:flex;align-items:center;gap:5px;cursor:pointer}
+  .save-bar .chk input{accent-color:var(--accent)}
+  .save-bar .path{
+    flex:1;background:var(--bg);border:1px solid var(--line);padding:5px 8px;border-radius:4px;
+    font-family:var(--mono);font-size:10.5px;color:var(--text2);outline:none;
+  }
+  .save-bar .path:disabled{opacity:.5}
+
+  /* ═════════════ Center output ═════════════ */
+  .output-area{
+    flex:1;display:flex;flex-direction:column;min-height:0;background:#14161a;
+  }
+  .output-tabs{
+    display:flex;background:var(--bg2);border-bottom:1px solid var(--line);
+    flex-shrink:0;padding:0 6px;
+  }
+  .output-tab{
+    padding:8px 14px;color:var(--text2);cursor:pointer;font-size:11.5px;
+    border-bottom:2px solid transparent;display:flex;align-items:center;gap:5px;
+  }
+  .output-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg)}
+  .output-tab .x{margin-left:4px;color:var(--dim);font-family:var(--mono);font-size:10px}
+  .output-tab .x:hover{color:var(--text)}
+  .output{flex:1;overflow:auto;font-family:var(--mono);font-size:12px;color:#cfd3da;padding:16px 18px;white-space:pre;line-height:1.55}
+
+  /* ═════════════ Right: live preview ═════════════ */
+  .preview-pane{display:flex;flex-direction:column}
+  .preview-cover{
+    width:100%;aspect-ratio:1;background:var(--panel);margin:14px;border-radius:8px;
+    background-size:cover;background-position:center;background-repeat:no-repeat;
+    box-shadow:0 4px 12px rgba(0,0,0,.4);position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .preview-cover .empty{color:var(--dim);font-size:11px;text-align:center;padding:20px}
+  .preview-cover .count-tag{
+    position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.75);color:white;
+    padding:3px 8px;border-radius:10px;font-size:11px;font-family:var(--mono);
+    backdrop-filter:blur(4px);
+  }
+  .preview-meta{padding:0 14px 10px}
+  .preview-meta h3{margin:0 0 4px;font-size:15px;font-weight:600;color:var(--text);line-height:1.3}
+  .preview-meta .creator{font-size:11.5px;color:var(--text2);margin-bottom:8px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+  .stat .lbl{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+  .stat .val{font-size:12px;color:var(--text);font-family:var(--mono);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+  .tag{background:#2a2535;color:var(--pink);font-size:10px;padding:2px 7px;border-radius:8px;border:1px solid #3a3145}
+
+  .preview-songs{margin-top:8px;padding:0 14px;flex:1;min-height:0;overflow-y:auto}
+  .preview-songs-title{
+    font-size:11px;color:var(--dim);font-weight:600;letter-spacing:.5px;
+    margin:6px 0;display:flex;align-items:center;gap:6px;
+  }
+  .preview-songs-title::before{content:"";width:3px;height:10px;background:var(--accent);border-radius:1px}
+  .psong{
+    display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;
+    padding:5px 4px;border-radius:4px;font-size:11.5px;
+  }
+  .psong:hover{background:var(--panel)}
+  .psong .idx{color:var(--dim);font-family:var(--mono);text-align:right;font-size:10.5px}
+  .psong .name{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .psong .name .ar{color:var(--text2);font-size:10.5px;margin-left:4px}
+  .psong .dur{color:var(--text2);font-family:var(--mono);font-size:10.5px}
+
+  .preview-foot{padding:14px;border-top:1px solid var(--line);display:flex;gap:6px}
+  .preview-foot .btn{flex:1;justify-content:center}
+
+  /* ═════════════ Empty states ═════════════ */
+  .empty-state{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--dim);text-align:center;padding:30px;font-size:12px;
+  }
+  .empty-state .big{font-size:36px;margin-bottom:10px;opacity:.6}
+  .empty-state .tip{margin-top:6px;color:var(--dim);font-size:10.5px;max-width:280px;line-height:1.5}
+
+  /* ═════════════ Toast ═════════════ */
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--panel);border:1px solid var(--line2);padding:8px 16px;
+    border-radius:20px;font-size:12px;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.5);
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:100;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+<div class="window">
+
+  <!-- ══════ Title bar ══════ -->
+  <div class="titlebar">
+    <span class="icon">🎵</span>
+    <span class="title">QqPlaylist</span>
+    <span class="ver">v2.0-preview</span>
+    <span class="spacer"></span>
+    <div class="winbtns">
+      <span>─</span><span>□</span><span style="color:var(--bad)">×</span>
+    </div>
+  </div>
+
+  <!-- ══════ Top status bar ══════ -->
+  <div class="topbar">
+    <span class="led"></span>
+    <span class="text"><b>The Greatest Hits</b> · 166 首 · ⏱ 9小时23分 · 已选中</span>
+    <span class="spacer"></span>
+    <div class="right">
+      <span class="pill good">● 抓取成功</span>
+      <span class="pill">QQ 1145661286</span>
+      <span class="pill">📂 JSON 已保存</span>
+    </div>
+  </div>
+
+  <!-- ══════ 3 Panes ══════ -->
+  <div class="panes">
+
+    <!-- ─── LEFT: 我的歌单 ─── -->
+    <div class="pane">
+      <div class="pane-head">
+        <span class="ico">📋</span><span>我的歌单</span>
+        <span class="count">72</span>
+      </div>
+      <div class="pane-body">
+        <div class="search">
+          <span class="si">🔍</span>
+          <input placeholder="搜索歌单名…" />
+        </div>
+
+        <div class="group-label">我创建的 · 65</div>
+
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> Jp IdolMaster</div>
+          <div class="row2"><span class="badge">72 首</span><span>1.0K 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> Jp Vocaloid</div>
+          <div class="row2"><span class="badge">212 首</span><span>3.9K 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> Jp VCover</div>
+          <div class="row2"><span class="badge">61 首</span><span>2.3K 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> Jp Bang Dream</div>
+          <div class="row2"><span class="badge">41 首</span><span>850 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> PJSK</div>
+          <div class="row2"><span class="badge">91 首</span><span>1.6K 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> Eu Pop</div>
+          <div class="row2"><span class="badge">302 首</span><span>4.7K 播放</span></div>
+        </div>
+        <div class="pl-item active">
+          <div class="row1"><span class="ic">📁</span> <b>The Greatest Hits</b></div>
+          <div class="row2"><span class="badge">166 首</span><span>38 播放</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">📁</span> 林子</div>
+          <div class="row2"><span class="badge">353 首</span><span>0 播放</span></div>
+        </div>
+
+        <div class="group-label">我收藏的 · 7</div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">💖</span> Music Of Year 2021</div>
+          <div class="row2"><span class="badge">40 首</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">💖</span> Music Of Year 2022</div>
+          <div class="row2"><span class="badge">50 首</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">💖</span> Music Of Year 2023</div>
+          <div class="row2"><span class="badge">50 首</span></div>
+        </div>
+        <div class="pl-item">
+          <div class="row1"><span class="ic">💖</span> Music Of Year 2024</div>
+          <div class="row2"><span class="badge">50 首</span></div>
+        </div>
+
+        <div class="load-my collapsed" id="loadMyBox">
+          <div class="head" onclick="toggleLoadMy()">
+            <span class="arr">▶</span><span>⚙ 加载 / 刷新我的歌单</span>
+          </div>
+          <div class="body">
+            <div class="hint ok">✅ Cookie 已从本地读取</div>
+            <input class="input" placeholder="QQ 号" value="1145661286" />
+            <textarea class="input" placeholder="uin=...; skey=...; ..."></textarea>
+            <div class="row-btns">
+              <button class="btn primary" style="flex:1;justify-content:center">💾 加载</button>
+              <button class="btn ghost">🗑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CENTER: input + output ─── -->
+    <div class="pane center">
+      <div class="input-panel">
+        <div class="row">
+          <div class="field" style="flex:1">
+            <label>🎵 歌单 ID 或 URL</label>
+            <input value="9768457679" placeholder="https://y.qq.com/n/ryqq_v2/playlist/9768457679 或 9768457679" />
+          </div>
+          <button class="btn primary" style="align-self:flex-end;height:36px">▶ 抓取歌单</button>
+        </div>
+        <div class="save-bar">
+          <label class="chk"><input type="checkbox" checked /> 解析后自动保存</label>
+          <input class="path" value="C:\Users\Smile4KKR\Documents\playlist_The Greatest Hits.md" disabled />
+          <button class="btn ghost">📂 浏览…</button>
+          <button class="btn">💾 保存</button>
+          <button class="btn">📋 复制</button>
+        </div>
+      </div>
+
+      <div class="output-area">
+        <div class="output-tabs">
+          <div class="output-tab active">📄 抓取结果<span class="x">×</span></div>
+          <div class="output-tab">📋 JSON 预览<span class="x">×</span></div>
+        </div>
+        <div class="output">══════════════════════════════════════════════════
+  🎵  The Greatest Hits
+══════════════════════════════════════════════════
+
+  🆔  ID          : 9768457679
+  👤  创建者      : Kosmos,Cosmos
+  📅  创建时间    : 2020-03-15 21:18
+  📊  歌曲总数    : 166 首
+  ⏱   总时长      : 9小时23分   (平均 3:25/首)
+  🏷  标签        : 英语 / 流行 / 摇滚
+  🖼  封面        : http://y.gtimg.cn/music/photo_new/T002R500x500M0000012QHe62XXo0C.jpg
+
+  📝  简介:
+      The Greatest Hits of all time…
+
+────────────────────────────────────────────────────────────────────────────────
+| #  | 歌名 | 歌手 | 专辑 | 时长 |
+|----|------|------|------|------|
+|   1 | Rocket Man        | Elton John           | Honky Château         |  4:41 |
+|   2 | Tiny Dancer       | Elton John           | Madman Across The Water|  6:12 |
+|   3 | Your Song         | Elton John           | Elton John            |  4:01 |
+|   4 | Crocodile Rock    | Elton John           | Don't Shoot Me        |  3:56 |
+|   5 | Daniel            | Elton John           | Don't Shoot Me        |  3:54 |
+|   6 | Saturday Night    | Elton John           | Goodbye Yellow Brick… |  3:52 |
+|   7 | Goodbye Yellow…   | Elton John           | Goodbye Yellow Brick… |  3:20 |
+|   8 | Bennie and the…   | Elton John           | Goodbye Yellow Brick… |  5:22 |
+|   9 | Philadelphia Freedom| Elton John         | Caribou               |  5:39 |
+|  10 | Island Girl        | Elton John           | Rock of the Westies   |  3:43 |
+...
+
+—— 共 166 首 · 总时长 9小时23分 ——
+🎵 QqPlaylist · 抓取于 2026-08-25 14:30:15</div>
+      </div>
+    </div>
+
+    <!-- ─── RIGHT: live preview ─── -->
+    <div class="pane preview-pane">
+      <div class="pane-head">
+        <span class="ico">👁</span><span>实时预览</span>
+        <span class="count">已选中</span>
+      </div>
+      <div class="pane-body" style="display:flex;flex-direction:column;padding:0">
+        <div class="preview-cover" style="background-image:url('https://y.gtimg.cn/music/photo_new/T002R500x500M0000012QHe62XXo0C.jpg')">
+          <div class="count-tag">🎵 166 首</div>
+        </div>
+        <div class="preview-meta">
+          <h3>The Greatest Hits</h3>
+          <div class="creator">by Kosmos,Cosmos · 2020-03-15</div>
+          <div class="stats">
+            <div class="stat"><div class="lbl">总时长</div><div class="val">9小时23分</div></div>
+            <div class="stat"><div class="lbl">平均时长</div><div class="val">3:25/首</div></div>
+            <div class="stat"><div class="lbl">歌曲数</div><div class="val">166</div></div>
+            <div class="stat"><div class="lbl">总播放</div><div class="val">38 次</div></div>
+          </div>
+          <div class="tags">
+            <span class="tag">英语</span>
+            <span class="tag">流行</span>
+            <span class="tag">摇滚</span>
+          </div>
+        </div>
+        <div class="preview-songs">
+          <div class="preview-songs-title">歌曲预览 · Top 5</div>
+          <div class="psong"><span class="idx">1</span><span class="name">Rocket Man<span class="ar">— Elton John</span></span><span class="dur">4:41</span></div>
+          <div class="psong"><span class="idx">2</span><span class="name">Tiny Dancer<span class="ar">— Elton John</span></span><span class="dur">6:12</span></div>
+          <div class="psong"><span class="idx">3</span><span class="name">Your Song<span class="ar">— Elton John</span></span><span class="dur">4:01</span></div>
+          <div class="psong"><span class="idx">4</span><span class="name">Crocodile Rock<span class="ar">— Elton John</span></span><span class="dur">3:56</span></div>
+          <div class="psong"><span class="idx">5</span><span class="name">Daniel<span class="ar">— Elton John</span></span><span class="dur">3:54</span></div>
+        </div>
+        <div class="preview-foot">
+          <button class="btn primary">▶ 抓取完整歌单</button>
+          <button class="btn ghost">📂 JSON</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(window._tt);
+    window._tt = setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+  function toggleLoadMy(){
+    document.getElementById('loadMyBox').classList.toggle('collapsed');
+  }
+  document.querySelectorAll('.pl-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.pl-item').forEach(x=>x.classList.remove('active'));
+      el.classList.add('active');
+      toast('✓ 已选中: ' + el.querySelector('.row1').innerText.trim());
+    });
+    el.addEventListener('dblclick',()=>{
+      toast('▶ 抓取中…');
+    });
+  });
+</script>
+</body>
+</html>
