@@ -51,6 +51,7 @@ WindowsTools/
 | 🔀 **持久化洗牌** | 队列状态存盘，重启不重复播放同一首 |
 | 🎵 **连续流播放** | 静音前导唤醒设备 + intro + 正文无缝拼接 |
 | 🎬 **视频播放** | 独立定时，自动全屏，播放完毕自动关闭 |
+| 📋 **视频排班** | 按顺序播放多个视频，同一视频可重复排班，UI 高亮当前项 |
 | 🔊 **音量设置** | UI 滑块调节 0~100% |
 | 🚀 **开机自启** | 勾选即写入注册表 Run |
 | 📂 **文件管理** | 一键打开 voice 文件夹，支持试听 |
@@ -82,6 +83,9 @@ WindowsTools/
 | ▶ **播放** | F6 按时间戳精准还原每一个事件 |
 | 📼 **列表管理** | 按时间倒序显示，可播放/删除任意一条录制 |
 | 🎯 **侧键支持** | 支持 XButton1/XButton2 侧键录制与播放 |
+| 📋 **录制预设** | 可视化编辑器 + 按键捕获窗体，复用录制方案 |
+| 🖱 **鼠标追踪** | 可选录制/回放鼠标绝对坐标，📍 标记区分 |
+| ⌨ **虚拟键码** | VK ↔ ScanCode 转换，绕过前台焦点触发组合键 |
 
 **技术栈**：.NET 8.0 + WinForms + 双低级钩子 + SendInput
 
@@ -141,11 +145,18 @@ dotnet run --project Klick
 dotnet run --project DailyVoice
 dotnet run --project ThumbPin
 dotnet run --project MoodyBlues
-dotnet run --project ThumbPin
+dotnet run --project Yoink
+dotnet run --project ClaudeMaster
+dotnet run --project QqPlaylist
 
 # 重新发布到 Deck
 dotnet publish Klick/Klick.csproj -c Release -o Deck/Klick
 dotnet publish DailyVoice/DailyVoice.csproj -c Release -o Deck/DailyVoice
+dotnet publish ThumbPin/ThumbPin.csproj -c Release -o Deck/ThumbPin
+dotnet publish MoodyBlues/MoodyBlues.csproj -c Release -o Deck/MoodyBlues
+dotnet publish Yoink/Yoink.csproj -c Release -o Deck/Yoink
+dotnet publish ClaudeMaster/ClaudeMaster.csproj -c Release -o Deck/ClaudeMaster
+dotnet publish QqPlaylist/QqPlaylist.csproj -c Release -o Deck/QqPlaylist
 ```
 
 ## 开发环境
